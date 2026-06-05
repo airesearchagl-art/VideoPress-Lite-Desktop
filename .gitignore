@@ -1,6 +1,8 @@
 node_modules/
 .npm-cache/
 .electron-cache/
+ffmpeg-release-essentials.zip
+ffmpeg-extract/
 dist/
 out/
 *.log

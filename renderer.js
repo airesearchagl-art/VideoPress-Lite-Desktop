@@ -94,10 +94,15 @@ async function checkTools() {
     state.tools = await window.videoPress.checkTools();
     const ffmpegOk = state.tools.ffmpeg.available;
     const ffprobeOk = state.tools.ffprobe.available;
-    els.toolStatus.textContent = ffmpegOk && ffprobeOk ? "FFmpeg検出済み" : "FFmpeg未検出";
+    const bundled = state.tools.ffmpegSource === "bundled" && state.tools.ffprobeSource === "bundled";
+    els.toolStatus.textContent = ffmpegOk && ffprobeOk
+      ? bundled
+        ? "同梱FFmpeg検出済み"
+        : "PATH FFmpeg検出済み"
+      : "FFmpeg未検出";
 
-    if (!ffmpegOk) showWarning("FFmpegが見つかりません。ffmpegをインストールし、PATHに追加してください。");
-    if (!ffprobeOk) showWarning("ffprobeが見つかりません。ffprobeをインストールし、PATHに追加してください。");
+    if (!ffmpegOk) showWarning("同梱FFmpegが見つからず、PATH上のFFmpegも利用できません。resources/ffmpeg/win/ffmpeg.exe を確認してください。");
+    if (!ffprobeOk) showWarning("同梱ffprobeが見つからず、PATH上のffprobeも利用できません。resources/ffmpeg/win/ffprobe.exe を確認してください。");
   } catch (error) {
     showError(toMessage(error));
   }

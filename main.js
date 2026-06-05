@@ -52,30 +52,36 @@ function registerIpc() {
 }
 
 async function checkTools() {
-  const ffmpegPath = resolveToolPath("ffmpeg");
-  const ffprobePath = resolveToolPath("ffprobe");
+  const ffmpegTool = resolveTool("ffmpeg");
+  const ffprobeTool = resolveTool("ffprobe");
 
   const [ffmpeg, ffprobe] = await Promise.all([
-    getToolVersion(ffmpegPath, ["-version"]),
-    getToolVersion(ffprobePath, ["-version"]),
+    getToolVersion(ffmpegTool.command, ["-version"]),
+    getToolVersion(ffprobeTool.command, ["-version"]),
   ]);
 
   return {
-    ffmpegPath,
-    ffprobePath,
+    ffmpegPath: ffmpegTool.command,
+    ffprobePath: ffprobeTool.command,
+    ffmpegSource: ffmpegTool.source,
+    ffprobeSource: ffprobeTool.source,
     ffmpeg,
     ffprobe,
   };
 }
 
 function resolveToolPath(toolName) {
+  return resolveTool(toolName).command;
+}
+
+function resolveTool(toolName) {
   const exeName = process.platform === "win32" ? `${toolName}.exe` : toolName;
   const bundledPath = path.join(process.resourcesPath || __dirname, "ffmpeg", "win", exeName);
   const devBundledPath = path.join(__dirname, "resources", "ffmpeg", "win", exeName);
 
-  if (fs.existsSync(devBundledPath)) return devBundledPath;
-  if (fs.existsSync(bundledPath)) return bundledPath;
-  return toolName;
+  if (fs.existsSync(devBundledPath)) return { command: devBundledPath, source: "bundled" };
+  if (fs.existsSync(bundledPath)) return { command: bundledPath, source: "bundled" };
+  return { command: toolName, source: "path" };
 }
 
 function getToolVersion(command, args) {
@@ -180,7 +186,7 @@ async function compressVideo(payload) {
 
     currentProcess.on("error", (error) => {
       currentProcess = null;
-      reject(toUserError(error, "FFmpegが見つかりません。ffmpegをインストールし、PATHに追加してください。"));
+      reject(toUserError(error, "同梱FFmpegが見つからず、PATH上のFFmpegも利用できません。resources/ffmpeg/win/ffmpeg.exe を確認してください。"));
     });
 
     currentProcess.on("close", (code) => {
@@ -309,7 +315,7 @@ function runProcess(command, args) {
       stderr += data.toString();
     });
     child.on("error", (error) => {
-      reject(toUserError(error, "ffprobeが見つかりません。ffprobeをインストールし、PATHに追加してください。"));
+      reject(toUserError(error, "同梱ffprobeが見つからず、PATH上のffprobeも利用できません。resources/ffmpeg/win/ffprobe.exe を確認してください。"));
     });
     child.on("close", (code) => {
       resolve({ code, stdout, stderr });
