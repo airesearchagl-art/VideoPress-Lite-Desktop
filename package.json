@@ -6,7 +6,7 @@
   "scripts": {
     "start": "electron .",
     "check": "node --check main.js && node --check preload.js && node --check renderer.js",
-    "build": "electron-builder --win nsis"
+    "build": "electron-builder --win nsis && node scripts/fix-latest-yml.js"
   },
   "build": {
     "appId": "jp.airesearchagl.videopress-lite-desktop",
