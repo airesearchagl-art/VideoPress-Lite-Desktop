@@ -9,6 +9,8 @@ const PRESETS = {
   standard: { width: 1280, crf: 28, preset: "veryfast", audio: "96k" },
   high: { width: 1920, crf: 23, preset: "fast", audio: "128k" },
 };
+const NVENC_ENCODERS = ["h264_nvenc", "hevc_nvenc", "av1_nvenc"];
+const VIDEO_ENCODERS = new Set(["cpu", ...NVENC_ENCODERS]);
 
 let mainWindow;
 let currentProcess = null;
@@ -55,9 +57,11 @@ async function checkTools() {
   const ffmpegTool = resolveTool("ffmpeg");
   const ffprobeTool = resolveTool("ffprobe");
 
-  const [ffmpeg, ffprobe] = await Promise.all([
+  const [ffmpeg, ffprobe, encoders, gpu] = await Promise.all([
     getToolVersion(ffmpegTool.command, ["-version"]),
     getToolVersion(ffprobeTool.command, ["-version"]),
+    getEncoderSupport(ffmpegTool.command),
+    getGpuInfo(),
   ]);
 
   return {
@@ -67,6 +71,8 @@ async function checkTools() {
     ffprobeSource: ffprobeTool.source,
     ffmpeg,
     ffprobe,
+    encoders,
+    gpu,
   };
 }
 
@@ -171,6 +177,12 @@ async function compressVideo(payload) {
   ensureWritable(path.dirname(outputPath));
 
   const settings = normalizeSettings(payload.settings);
+  if (settings.encoder !== "cpu") {
+    const support = await getEncoderSupport(ffmpegPath);
+    if (!support[settings.encoder]) {
+      throw new UserError(`${settings.encoder} がこのFFmpegで利用できません。CPUまたは利用可能なNVENCを選択してください。`);
+    }
+  }
   const args = buildFfmpegArgs(payload.filePath, outputPath, settings);
   const startedAt = Date.now();
 
@@ -220,28 +232,21 @@ function buildFfmpegArgs(inputPath, outputPath, settings) {
     args.push("-vf", `scale=${settings.width}:-2`);
   }
 
-  args.push(
-    "-c:v",
-    "libx264",
-    "-preset",
-    settings.preset,
-    "-crf",
-    String(settings.crf),
-    "-c:a",
-    "aac",
-    "-b:a",
-    settings.audio,
-    "-movflags",
-    "+faststart",
-    outputPath,
-  );
+  if (settings.encoder === "cpu") {
+    args.push("-c:v", "libx264", "-preset", settings.preset, "-crf", String(settings.crf));
+  } else {
+    args.push("-c:v", settings.encoder, "-preset", "p5", "-cq", String(settings.crf));
+  }
+
+  args.push("-c:a", "aac", "-b:a", settings.audio, "-movflags", "+faststart", outputPath);
 
   return args;
 }
 
 function normalizeSettings(settings = {}) {
+  const encoder = VIDEO_ENCODERS.has(settings.encoder) ? settings.encoder : "cpu";
   if (settings.mode && PRESETS[settings.mode]) {
-    return PRESETS[settings.mode];
+    return { ...PRESETS[settings.mode], encoder };
   }
 
   return {
@@ -249,7 +254,46 @@ function normalizeSettings(settings = {}) {
     crf: clampNumber(Number(settings.crf), 18, 35, 28),
     preset: ["veryfast", "fast", "medium", "slow"].includes(settings.preset) ? settings.preset : "veryfast",
     audio: ["64k", "96k", "128k"].includes(settings.audio) ? settings.audio : "96k",
+    encoder,
   };
+}
+
+async function getEncoderSupport(ffmpegPath) {
+  const support = Object.fromEntries(NVENC_ENCODERS.map((name) => [name, false]));
+
+  try {
+    const result = await runProcess(ffmpegPath, ["-encoders"]);
+    const text = `${result.stdout}\n${result.stderr}`;
+    for (const encoder of NVENC_ENCODERS) {
+      support[encoder] = new RegExp(`\\b${encoder}\\b`).test(text);
+    }
+  } catch {
+    // 起動時のFFmpeg未検出は別メッセージで扱う。
+  }
+
+  return support;
+}
+
+function getGpuInfo() {
+  return new Promise((resolve) => {
+    const child = spawn("nvidia-smi", ["--query-gpu=name", "--format=csv,noheader"], { windowsHide: true });
+    let output = "";
+
+    child.stdout.on("data", (data) => {
+      output += data.toString();
+    });
+    child.on("error", () => {
+      resolve({ available: false, names: [], hasRtx4090: false });
+    });
+    child.on("close", (code) => {
+      const names = code === 0 ? output.split(/\r?\n/).map((name) => name.trim()).filter(Boolean) : [];
+      resolve({
+        available: names.length > 0,
+        names,
+        hasRtx4090: names.some((name) => /rtx\s*4090/i.test(name)),
+      });
+    });
+  });
 }
 
 function buildOutputPath(inputPath) {

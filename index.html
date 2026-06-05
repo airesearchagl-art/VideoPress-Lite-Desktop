@@ -14,7 +14,10 @@
           <h1>VideoPress Lite Desktop</h1>
           <p>動画を外部サーバーへ送信せず、ローカルPC上のネイティブFFmpegで圧縮します。</p>
         </div>
-        <div id="toolStatus" class="tool-status">FFmpeg確認中</div>
+        <div class="status-stack">
+          <div id="toolStatus" class="tool-status">FFmpeg確認中</div>
+          <div id="gpuStatus" class="tool-status">GPU確認中</div>
+        </div>
       </header>
 
       <main class="workflow">
@@ -93,6 +96,15 @@
                   <option value="64k">64k</option>
                   <option value="96k" selected>96k</option>
                   <option value="128k">128k</option>
+                </select>
+              </label>
+              <label>
+                <span>エンコード方式</span>
+                <select id="encoderSelect">
+                  <option value="cpu" selected>CPU</option>
+                  <option value="h264_nvenc">GPU(H264 NVENC)</option>
+                  <option value="hevc_nvenc">GPU(H265 NVENC)</option>
+                  <option value="av1_nvenc">GPU(AV1 NVENC)</option>
                 </select>
               </label>
             </form>

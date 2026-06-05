@@ -3,6 +3,11 @@ const PRESET_SETTINGS = {
   standard: { width: "1280", crf: 28, preset: "veryfast", audio: "96k" },
   high: { width: "1920", crf: 23, preset: "fast", audio: "128k" },
 };
+const NVENC_LABELS = {
+  h264_nvenc: "GPU(H264 NVENC)",
+  hevc_nvenc: "GPU(H265 NVENC)",
+  av1_nvenc: "GPU(AV1 NVENC)",
+};
 
 const state = {
   tools: null,
@@ -12,6 +17,7 @@ const state = {
 
 const els = {
   toolStatus: document.querySelector("#toolStatus"),
+  gpuStatus: document.querySelector("#gpuStatus"),
   dropZone: document.querySelector("#dropZone"),
   selectButton: document.querySelector("#selectButton"),
   errorBox: document.querySelector("#errorBox"),
@@ -31,6 +37,7 @@ const els = {
   crfInput: document.querySelector("#crfInput"),
   presetSelect: document.querySelector("#presetSelect"),
   audioSelect: document.querySelector("#audioSelect"),
+  encoderSelect: document.querySelector("#encoderSelect"),
   estimateOriginal: document.querySelector("#estimateOriginal"),
   estimateOutput: document.querySelector("#estimateOutput"),
   estimateRate: document.querySelector("#estimateRate"),
@@ -100,12 +107,39 @@ async function checkTools() {
         ? "同梱FFmpeg検出済み"
         : "PATH FFmpeg検出済み"
       : "FFmpeg未検出";
+    updateGpuStatus();
 
     if (!ffmpegOk) showWarning("同梱FFmpegが見つからず、PATH上のFFmpegも利用できません。resources/ffmpeg/win/ffmpeg.exe を確認してください。");
     if (!ffprobeOk) showWarning("同梱ffprobeが見つからず、PATH上のffprobeも利用できません。resources/ffmpeg/win/ffprobe.exe を確認してください。");
   } catch (error) {
     showError(toMessage(error));
   }
+}
+
+function updateGpuStatus() {
+  const encoders = state.tools?.encoders || {};
+  const availableNvenc = Object.keys(NVENC_LABELS).filter((encoder) => encoders[encoder]);
+  const gpuNames = state.tools?.gpu?.names || [];
+
+  for (const option of els.encoderSelect.options) {
+    if (option.value === "cpu") continue;
+    option.disabled = !encoders[option.value];
+  }
+
+  if (state.tools?.gpu?.hasRtx4090 && encoders.h264_nvenc) {
+    els.encoderSelect.value = "h264_nvenc";
+  }
+
+  if (availableNvenc.length > 0) {
+    const gpuText = gpuNames.length > 0
+      ? `${gpuNames.join(", ")} 検出済み`
+      : "GPU未確認";
+    els.gpuStatus.textContent = `${gpuText} / NVENC利用可能`;
+    return;
+  }
+
+  els.encoderSelect.value = "cpu";
+  els.gpuStatus.textContent = "NVENC未検出 / CPU使用";
 }
 
 async function selectVideo() {
@@ -192,6 +226,7 @@ function getSettings() {
     crf: Number(els.crfInput.value),
     preset: els.presetSelect.value,
     audio: els.audioSelect.value,
+    encoder: els.encoderSelect.value,
   };
 }
 

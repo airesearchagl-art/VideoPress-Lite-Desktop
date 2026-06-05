@@ -47,6 +47,12 @@ select {
   padding: 18px 0 20px;
 }
 
+.status-stack {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
 .eyebrow {
   margin: 0 0 6px;
   color: var(--accent);
@@ -305,5 +311,9 @@ progress::-webkit-progress-value {
 
   .app-header {
     flex-direction: column;
+  }
+
+  .status-stack {
+    justify-items: start;
   }
 }
