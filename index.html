@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VideoPress Lite Desktop</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">Native FFmpeg Video Compression Tool</p>
+          <h1>VideoPress Lite Desktop</h1>
+          <p>動画を外部サーバーへ送信せず、ローカルPC上のネイティブFFmpegで圧縮します。</p>
+        </div>
+        <div id="toolStatus" class="tool-status">FFmpeg確認中</div>
+      </header>
+
+      <main class="workflow">
+        <section class="panel">
+          <div id="dropZone" class="drop-zone">
+            <div class="drop-icon">↓</div>
+            <div>
+              <h2>動画ファイルを投入</h2>
+              <p>mp4 / mov / m4v / avi / mkv / webm に対応。ドラッグ＆ドロップまたはファイル選択を使用してください。</p>
+            </div>
+            <button id="selectButton" class="primary-button" type="button">ファイルを選択</button>
+          </div>
+          <div id="errorBox" class="notice error hidden"></div>
+          <div id="warningBox" class="notice warning hidden"></div>
+        </section>
+
+        <section class="grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <h2>元動画情報</h2>
+              <span id="fileStatus" class="chip">未選択</span>
+            </div>
+            <dl class="info-list">
+              <div><dt>ファイル名</dt><dd id="infoName">-</dd></div>
+              <div><dt>容量</dt><dd id="infoSize">-</dd></div>
+              <div><dt>再生時間</dt><dd id="infoDuration">-</dd></div>
+              <div><dt>解像度</dt><dd id="infoResolution">-</dd></div>
+              <div><dt>動画コーデック</dt><dd id="infoVideoCodec">-</dd></div>
+              <div><dt>音声コーデック</dt><dd id="infoAudioCodec">-</dd></div>
+              <div><dt>ビットレート</dt><dd id="infoBitrate">-</dd></div>
+              <div><dt>フレームレート</dt><dd id="infoFrameRate">-</dd></div>
+            </dl>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <h2>圧縮設定</h2>
+              <span class="chip">MP4 / H.264</span>
+            </div>
+            <form id="settingsForm" class="settings-form">
+              <label>
+                <span>プリセット</span>
+                <select id="modeSelect">
+                  <option value="light">軽量モード</option>
+                  <option value="standard" selected>標準モード</option>
+                  <option value="high">高画質モード</option>
+                  <option value="custom">カスタム</option>
+                </select>
+              </label>
+              <label>
+                <span>出力解像度</span>
+                <select id="widthSelect">
+                  <option value="original">元サイズ</option>
+                  <option value="1920">1920幅</option>
+                  <option value="1280" selected>1280幅</option>
+                  <option value="960">960幅</option>
+                  <option value="720">720幅</option>
+                </select>
+              </label>
+              <label>
+                <span>CRF</span>
+                <input id="crfInput" type="number" min="18" max="35" value="28" />
+              </label>
+              <label>
+                <span>preset</span>
+                <select id="presetSelect">
+                  <option value="veryfast" selected>veryfast</option>
+                  <option value="fast">fast</option>
+                  <option value="medium">medium</option>
+                  <option value="slow">slow</option>
+                </select>
+              </label>
+              <label>
+                <span>audio bitrate</span>
+                <select id="audioSelect">
+                  <option value="64k">64k</option>
+                  <option value="96k" selected>96k</option>
+                  <option value="128k">128k</option>
+                </select>
+              </label>
+            </form>
+          </article>
+        </section>
+
+        <section class="grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <h2>容量予測</h2>
+              <span class="chip">概算</span>
+            </div>
+            <dl class="info-list">
+              <div><dt>元容量</dt><dd id="estimateOriginal">-</dd></div>
+              <div><dt>推定容量</dt><dd id="estimateOutput">-</dd></div>
+              <div><dt>推定削減率</dt><dd id="estimateRate">-</dd></div>
+            </dl>
+            <p class="muted">推定値です。実際の容量とは異なる場合があります。</p>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <h2>進捗表示</h2>
+              <span id="runStatus" class="chip">待機中</span>
+            </div>
+            <button id="compressButton" class="primary-button wide" type="button" disabled>圧縮開始</button>
+            <div class="progress-meta">
+              <span id="elapsedText">経過時間: -</span>
+              <span id="speedText">速度: -</span>
+              <strong id="percentText">0%</strong>
+            </div>
+            <progress id="progressBar" value="0" max="100"></progress>
+          </article>
+        </section>
+
+        <section id="resultPanel" class="panel hidden">
+          <div class="panel-heading">
+            <h2>結果</h2>
+            <span class="chip success">完了</span>
+          </div>
+          <dl class="info-list result-list">
+            <div><dt>圧縮前</dt><dd id="resultBefore">-</dd></div>
+            <div><dt>圧縮後</dt><dd id="resultAfter">-</dd></div>
+            <div><dt>削減容量</dt><dd id="resultSaved">-</dd></div>
+            <div><dt>出力ファイル</dt><dd id="resultPath">-</dd></div>
+          </dl>
+          <button id="openFolderButton" class="secondary-button" type="button">保存先フォルダを開く</button>
+        </section>
+      </main>
+    </div>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>
