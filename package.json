@@ -5,9 +5,54 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "check": "node --check main.js && node --check preload.js && node --check renderer.js"
+    "check": "node --check main.js && node --check preload.js && node --check renderer.js",
+    "build": "electron-builder --win nsis"
+  },
+  "build": {
+    "appId": "jp.airesearchagl.videopress-lite-desktop",
+    "productName": "VideoPress Lite Desktop",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "index.html",
+      "style.css",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/ffmpeg/win",
+        "to": "ffmpeg/win",
+        "filter": [
+          "ffmpeg.exe",
+          "ffprobe.exe"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "VideoPress Lite Desktop Setup.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "VideoPress Lite Desktop"
+    }
   },
   "devDependencies": {
-    "electron": "^33.4.11"
+    "electron": "^33.4.11",
+    "electron-builder": "^26.8.1"
   }
 }

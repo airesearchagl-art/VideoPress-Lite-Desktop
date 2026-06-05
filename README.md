@@ -100,6 +100,28 @@ PowerShellで `npm` が止まる場合:
 npm.cmd start
 ```
 
+## Windowsインストーラ作成
+
+```bash
+npm run build
+```
+
+PowerShellで `npm` が止まる場合:
+
+```bash
+npm.cmd run build
+```
+
+ビルド後、以下が生成されます。
+
+```text
+dist/
+  VideoPress Lite Desktop Setup.exe
+  latest.yml
+```
+
+インストーラはインストール先選択、デスクトップショートカット作成、スタートメニュー登録に対応しています。FFmpeg / ffprobe は同梱されます。
+
 ## 今後の改善予定
 
 - NVIDIA NVENC対応
