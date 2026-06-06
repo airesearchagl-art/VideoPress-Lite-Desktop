@@ -34,6 +34,47 @@
           <div id="warningBox" class="notice warning hidden"></div>
         </section>
 
+        <section id="batchPanel" class="panel hidden">
+          <div class="panel-heading">
+            <h2>Batch Queue</h2>
+            <span id="batchCount" class="chip">0 / 0</span>
+          </div>
+          <div class="batch-actions">
+            <button id="compressAllButton" class="primary-button" type="button" disabled>全件圧縮</button>
+            <button id="stopBatchButton" class="secondary-button" type="button" disabled>途中停止</button>
+            <button id="openBatchFolderButton" class="secondary-button" type="button" disabled>出力フォルダを開く</button>
+          </div>
+          <div class="progress-meta">
+            <span id="currentBatchFile">現在処理中: -</span>
+            <strong id="batchProgressText">0 / 0 件</strong>
+          </div>
+          <progress id="batchProgressBar" value="0" max="100"></progress>
+          <div class="table-wrap">
+            <table class="batch-table">
+              <thead>
+                <tr>
+                  <th>選択</th>
+                  <th>ファイル名</th>
+                  <th>元容量</th>
+                  <th>再生時間</th>
+                  <th>解像度</th>
+                  <th>状態</th>
+                  <th>圧縮後容量</th>
+                </tr>
+              </thead>
+              <tbody id="batchTableBody"></tbody>
+            </table>
+          </div>
+          <dl class="info-list batch-summary">
+            <div><dt>総ファイル数</dt><dd id="summaryTotal">0</dd></div>
+            <div><dt>成功数</dt><dd id="summarySuccess">0</dd></div>
+            <div><dt>失敗数</dt><dd id="summaryFailed">0</dd></div>
+            <div><dt>総削減容量</dt><dd id="summarySaved">-</dd></div>
+            <div><dt>総削減率</dt><dd id="summaryRate">-</dd></div>
+          </dl>
+          <div id="failedList" class="notice error hidden"></div>
+        </section>
+
         <section class="grid">
           <article class="panel">
             <div class="panel-heading">

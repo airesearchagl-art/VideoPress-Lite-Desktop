@@ -125,12 +125,12 @@ function getToolVersion(command, args) {
 async function selectVideoFile() {
   const result = await dialog.showOpenDialog(mainWindow, {
     title: "動画ファイルを選択",
-    properties: ["openFile"],
+    properties: ["openFile", "multiSelections"],
     filters: [{ name: "Video", extensions: ["mp4", "mov", "m4v", "avi", "mkv", "webm"] }],
   });
 
   if (result.canceled || result.filePaths.length === 0) return null;
-  return result.filePaths[0];
+  return result.filePaths;
 }
 
 async function probeVideo(filePath) {

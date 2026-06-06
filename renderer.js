@@ -18,6 +18,10 @@ const state = {
   tools: null,
   metadata: null,
   outputDirectory: null,
+  batchItems: [],
+  batchRunning: false,
+  stopAfterCurrent: false,
+  activeBatchItemId: null,
 };
 
 const els = {
@@ -27,6 +31,21 @@ const els = {
   selectButton: document.querySelector("#selectButton"),
   errorBox: document.querySelector("#errorBox"),
   warningBox: document.querySelector("#warningBox"),
+  batchPanel: document.querySelector("#batchPanel"),
+  batchCount: document.querySelector("#batchCount"),
+  compressAllButton: document.querySelector("#compressAllButton"),
+  stopBatchButton: document.querySelector("#stopBatchButton"),
+  openBatchFolderButton: document.querySelector("#openBatchFolderButton"),
+  currentBatchFile: document.querySelector("#currentBatchFile"),
+  batchProgressText: document.querySelector("#batchProgressText"),
+  batchProgressBar: document.querySelector("#batchProgressBar"),
+  batchTableBody: document.querySelector("#batchTableBody"),
+  summaryTotal: document.querySelector("#summaryTotal"),
+  summarySuccess: document.querySelector("#summarySuccess"),
+  summaryFailed: document.querySelector("#summaryFailed"),
+  summarySaved: document.querySelector("#summarySaved"),
+  summaryRate: document.querySelector("#summaryRate"),
+  failedList: document.querySelector("#failedList"),
   fileStatus: document.querySelector("#fileStatus"),
   infoName: document.querySelector("#infoName"),
   infoSize: document.querySelector("#infoSize"),
@@ -84,6 +103,16 @@ function bindEvents() {
   els.selectButton.addEventListener("click", selectVideo);
   els.compressButton.addEventListener("click", compressVideo);
   els.openFolderButton.addEventListener("click", openOutputFolder);
+  els.compressAllButton.addEventListener("click", compressBatch);
+  els.stopBatchButton.addEventListener("click", requestStopBatch);
+  els.openBatchFolderButton.addEventListener("click", openOutputFolder);
+  els.batchTableBody.addEventListener("change", (event) => {
+    if (event.target.matches("[data-batch-select]")) {
+      const item = state.batchItems.find((entry) => entry.id === event.target.dataset.batchSelect);
+      if (item) item.selected = event.target.checked;
+      updateBatchControls();
+    }
+  });
 
   els.modeSelect.addEventListener("change", () => {
     applyPreset();
@@ -106,9 +135,9 @@ function bindEvents() {
   });
 
   els.dropZone.addEventListener("drop", (event) => {
-    const file = event.dataTransfer.files?.[0];
-    const filePath = file ? window.videoPress.getFilePath(file) : null;
-    if (filePath) loadVideo(filePath);
+    const files = Array.from(event.dataTransfer.files || []);
+    const filePaths = files.map((file) => window.videoPress.getFilePath(file)).filter(Boolean);
+    if (filePaths.length > 0) loadVideoFiles(filePaths);
   });
 }
 
@@ -160,8 +189,51 @@ function updateGpuStatus() {
 
 async function selectVideo() {
   clearMessages();
-  const filePath = await window.videoPress.selectVideoFile();
-  if (filePath) await loadVideo(filePath);
+  const selected = await window.videoPress.selectVideoFile();
+  const filePaths = Array.isArray(selected) ? selected : selected ? [selected] : [];
+  if (filePaths.length > 0) await loadVideoFiles(filePaths);
+}
+
+async function loadVideoFiles(filePaths) {
+  clearMessages();
+  resetResult();
+  resetBatch();
+  state.metadata = null;
+  els.compressButton.disabled = true;
+  setRunStatus("動画解析中", 0);
+  els.fileStatus.textContent = "解析中";
+  els.batchPanel.classList.remove("hidden");
+
+  const uniquePaths = [...new Set(filePaths)];
+  for (const filePath of uniquePaths) {
+    const item = createBatchItem(filePath);
+    state.batchItems.push(item);
+    renderBatchTable();
+    try {
+      item.metadata = await window.videoPress.probeVideo(filePath);
+      item.status = "待機中";
+      if (!state.metadata) {
+        state.metadata = item.metadata;
+        renderMetadata();
+        updateEstimate();
+        els.compressButton.disabled = false;
+        els.fileStatus.textContent = "選択済み";
+        setRunStatus("待機中", 0);
+      }
+    } catch (error) {
+      item.status = "失敗";
+      item.error = toMessage(error);
+    }
+    renderBatchTable();
+    updateBatchSummary();
+  }
+
+  if (!state.metadata) {
+    els.compressButton.disabled = true;
+    els.fileStatus.textContent = "読み込み失敗";
+    setRunStatus("読み込み失敗", 0);
+  }
+  updateBatchControls();
 }
 
 async function loadVideo(filePath) {
@@ -207,6 +279,68 @@ async function compressVideo() {
   } finally {
     els.compressButton.disabled = !state.metadata;
   }
+}
+
+async function compressBatch() {
+  const targets = getBatchTargets();
+  if (targets.length === 0 || state.batchRunning) return;
+
+  clearMessages();
+  resetResult();
+  state.batchRunning = true;
+  state.stopAfterCurrent = false;
+  els.compressButton.disabled = true;
+  updateBatchControls();
+
+  const settings = getSettings();
+  for (const item of targets) {
+    if (state.stopAfterCurrent) break;
+    if (!item.metadata) continue;
+
+    state.activeBatchItemId = item.id;
+    item.status = "圧縮中";
+    item.progress = 0;
+    renderBatchTable();
+    updateBatchProgress();
+    setRunStatus("圧縮中", 0);
+
+    try {
+      const result = await window.videoPress.compressVideo({
+        filePath: item.filePath,
+        settings,
+      });
+      item.status = "完了";
+      item.progress = 100;
+      item.afterSize = result.afterSize;
+      item.outputDirectory = result.outputDirectory;
+      item.outputPath = result.outputPath;
+      item.result = result;
+      state.outputDirectory = result.outputDirectory;
+      renderResult(result);
+    } catch (error) {
+      item.status = "失敗";
+      item.error = toMessage(error);
+    }
+
+    renderBatchTable();
+    updateBatchSummary();
+    updateBatchProgress();
+    updateBatchControls();
+  }
+
+  state.activeBatchItemId = null;
+  state.batchRunning = false;
+  setRunStatus(state.stopAfterCurrent ? "停止済み" : "完了", state.stopAfterCurrent ? 0 : 100);
+  els.currentBatchFile.textContent = "現在処理中: -";
+  updateBatchControls();
+  updateBatchSummary();
+}
+
+function requestStopBatch() {
+  if (!state.batchRunning) return;
+  state.stopAfterCurrent = true;
+  els.stopBatchButton.disabled = true;
+  setRunStatus("停止予約", Number(els.progressBar.value || 0));
 }
 
 async function openOutputFolder() {
@@ -365,10 +499,122 @@ function renderTargetResult(result) {
   els.resultTargetStatus.textContent = achieved ? "達成" : "未達成";
 }
 
+function createBatchItem(filePath) {
+  return {
+    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    filePath,
+    selected: true,
+    metadata: null,
+    status: "解析中",
+    progress: 0,
+    afterSize: null,
+    outputDirectory: null,
+    outputPath: null,
+    error: "",
+  };
+}
+
+function resetBatch() {
+  state.batchItems = [];
+  state.batchRunning = false;
+  state.stopAfterCurrent = false;
+  state.activeBatchItemId = null;
+  renderBatchTable();
+  updateBatchProgress();
+  updateBatchSummary();
+  updateBatchControls();
+  els.failedList.classList.add("hidden");
+  els.failedList.textContent = "";
+}
+
+function renderBatchTable() {
+  els.batchTableBody.innerHTML = "";
+  for (const item of state.batchItems) {
+    const meta = item.metadata;
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td><input type="checkbox" data-batch-select="${item.id}" ${item.selected ? "checked" : ""} ${state.batchRunning ? "disabled" : ""}></td>
+      <td>${escapeHtml(meta?.fileName || fileNameFromPath(item.filePath))}</td>
+      <td>${meta ? formatBytes(meta.size) : "-"}</td>
+      <td>${meta ? formatDuration(meta.duration) : "-"}</td>
+      <td>${meta?.width && meta?.height ? `${meta.width} x ${meta.height}` : "-"}</td>
+      <td>${escapeHtml(formatBatchStatus(item))}</td>
+      <td>${Number.isFinite(item.afterSize) ? formatBytes(item.afterSize) : "-"}</td>
+    `;
+    els.batchTableBody.appendChild(row);
+  }
+}
+
+function formatBatchStatus(item) {
+  if (item.status === "圧縮中") return `${item.status} ${Math.round(item.progress || 0)}%`;
+  return item.status;
+}
+
+function getBatchTargets() {
+  const selected = state.batchItems.filter((item) => item.selected && item.metadata && item.status !== "圧縮中");
+  const source = selected.length > 0 ? selected : state.batchItems.filter((item) => item.metadata);
+  return source.filter((item) => item.status !== "完了");
+}
+
+function updateBatchControls() {
+  const hasReadyItems = state.batchItems.some((item) => item.metadata && item.status !== "完了");
+  els.batchPanel.classList.toggle("hidden", state.batchItems.length === 0);
+  els.compressAllButton.disabled = state.batchRunning || !hasReadyItems;
+  els.stopBatchButton.disabled = !state.batchRunning || state.stopAfterCurrent;
+  els.openBatchFolderButton.disabled = !state.outputDirectory;
+}
+
+function updateBatchProgress() {
+  const total = state.batchItems.length;
+  const done = state.batchItems.filter((item) => item.status === "完了" || item.status === "失敗").length;
+  const active = state.batchItems.find((item) => item.id === state.activeBatchItemId);
+  const activeProgress = active?.status === "圧縮中" ? (active.progress || 0) / 100 : 0;
+  const percent = total > 0 ? Math.min(100, ((done + activeProgress) / total) * 100) : 0;
+
+  els.batchCount.textContent = `${done} / ${total}`;
+  els.batchProgressText.textContent = `${done} / ${total} 件`;
+  els.batchProgressBar.value = Math.round(percent);
+  els.currentBatchFile.textContent = active?.metadata
+    ? `現在処理中: ${active.metadata.fileName}`
+    : "現在処理中: -";
+}
+
+function updateBatchSummary() {
+  const total = state.batchItems.length;
+  const successItems = state.batchItems.filter((item) => item.status === "完了");
+  const failedItems = state.batchItems.filter((item) => item.status === "失敗");
+  const beforeTotal = successItems.reduce((sum, item) => sum + (item.metadata?.size || 0), 0);
+  const afterTotal = successItems.reduce((sum, item) => sum + (item.afterSize || 0), 0);
+  const saved = Math.max(0, beforeTotal - afterTotal);
+  const rate = beforeTotal > 0 ? (saved / beforeTotal) * 100 : 0;
+
+  els.summaryTotal.textContent = String(total);
+  els.summarySuccess.textContent = String(successItems.length);
+  els.summaryFailed.textContent = String(failedItems.length);
+  els.summarySaved.textContent = successItems.length > 0 ? formatBytes(saved) : "-";
+  els.summaryRate.textContent = successItems.length > 0 ? `${rate.toFixed(1)}%` : "-";
+
+  if (failedItems.length > 0) {
+    els.failedList.textContent = `失敗ファイル: ${failedItems.map((item) => item.metadata?.fileName || fileNameFromPath(item.filePath)).join(", ")}`;
+    els.failedList.classList.remove("hidden");
+  } else {
+    els.failedList.classList.add("hidden");
+    els.failedList.textContent = "";
+  }
+}
+
 function updateProgress(progress) {
   setRunStatus(progress.status, progress.percent);
   els.elapsedText.textContent = `経過時間: ${formatDuration(progress.elapsedSeconds || 0)}`;
   els.speedText.textContent = `速度: ${progress.speed || "-"}`;
+  if (state.batchRunning && state.activeBatchItemId) {
+    const item = state.batchItems.find((entry) => entry.id === state.activeBatchItemId);
+    if (item) {
+      item.progress = Math.round(progress.percent || 0);
+      renderBatchTable();
+      updateBatchProgress();
+    }
+  }
 }
 
 function renderResult(result) {
@@ -400,6 +646,7 @@ function resetResult() {
   els.videoPreview.load();
   els.videoPreview.classList.add("hidden");
   els.resultPanel.classList.add("hidden");
+  updateBatchControls();
 }
 
 function showError(message) {
@@ -451,4 +698,17 @@ function formatNumber(value) {
 function clampNumber(value, min, max, fallback) {
   if (!Number.isFinite(value)) return fallback;
   return Math.min(max, Math.max(min, value));
+}
+
+function fileNameFromPath(filePath) {
+  return String(filePath || "").split(/[\\/]/).pop() || "-";
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
