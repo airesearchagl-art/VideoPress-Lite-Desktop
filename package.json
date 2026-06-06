@@ -1,6 +1,6 @@
 {
   "name": "videopress-lite-desktop",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "VideoPress Lite Desktop - local video compression with native FFmpeg",
   "author": "AI Research AGL",
   "main": "main.js",

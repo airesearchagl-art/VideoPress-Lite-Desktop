@@ -7,6 +7,9 @@ contextBridge.exposeInMainWorld("videoPress", {
   probeVideo: (filePath) => ipcRenderer.invoke("video:probe", filePath),
   compressVideo: (payload) => ipcRenderer.invoke("video:compress", payload),
   openFolder: (folderPath) => ipcRenderer.invoke("folder:open", folderPath),
+  getSettings: () => ipcRenderer.invoke("settings:get"),
+  saveSettings: (settings) => ipcRenderer.invoke("settings:save", settings),
+  resetSettings: () => ipcRenderer.invoke("settings:reset"),
   onProgress: (callback) => {
     const listener = (_event, payload) => callback(payload);
     ipcRenderer.on("video:progress", listener);

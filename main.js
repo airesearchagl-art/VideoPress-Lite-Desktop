@@ -17,6 +17,21 @@ const TARGET_SIZE_PRESETS = {
 };
 const NVENC_ENCODERS = ["h264_nvenc", "hevc_nvenc", "av1_nvenc"];
 const VIDEO_ENCODERS = new Set(["cpu", ...NVENC_ENCODERS]);
+const DEFAULT_SAVED_SETTINGS = {
+  compression: {
+    mode: "standard",
+    width: 1280,
+    crf: 28,
+    preset: "veryfast",
+    audio: "96k",
+    encoder: "cpu",
+    targetSizeMB: 100,
+  },
+  paths: {
+    lastInputDirectory: "",
+    lastOutputDirectory: "",
+  },
+};
 
 let mainWindow;
 let currentProcess = null;
@@ -57,6 +72,9 @@ function registerIpc() {
   ipcMain.handle("video:probe", (_event, filePath) => probeVideo(filePath));
   ipcMain.handle("video:compress", (_event, payload) => compressVideo(payload));
   ipcMain.handle("folder:open", (_event, folderPath) => openFolder(folderPath));
+  ipcMain.handle("settings:get", getSavedSettings);
+  ipcMain.handle("settings:save", (_event, settings) => saveSettings(settings));
+  ipcMain.handle("settings:reset", resetSettings);
 }
 
 async function checkTools() {
@@ -123,9 +141,14 @@ function getToolVersion(command, args) {
 }
 
 async function selectVideoFile() {
+  const savedSettings = getSavedSettings();
+  const defaultPath = savedSettings.paths.lastInputDirectory && fs.existsSync(savedSettings.paths.lastInputDirectory)
+    ? savedSettings.paths.lastInputDirectory
+    : undefined;
   const result = await dialog.showOpenDialog(mainWindow, {
     title: "動画ファイルを選択",
     properties: ["openFile", "multiSelections"],
+    defaultPath,
     filters: [{ name: "Video", extensions: ["mp4", "mov", "m4v", "avi", "mkv", "webm"] }],
   });
 
@@ -399,6 +422,73 @@ async function openFolder(folderPath) {
   }
   await shell.openPath(folderPath);
   return true;
+}
+
+function getSettingsPath() {
+  return path.join(app.getPath("userData"), "settings.json");
+}
+
+function getSavedSettings() {
+  const settingsPath = getSettingsPath();
+  if (!fs.existsSync(settingsPath)) return cloneDefaultSettings();
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(settingsPath, "utf8"));
+    return normalizeSavedSettings(parsed);
+  } catch {
+    return cloneDefaultSettings();
+  }
+}
+
+function saveSettings(settings = {}) {
+  const normalized = normalizeSavedSettings(settings);
+  const settingsPath = getSettingsPath();
+  fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
+  fs.writeFileSync(settingsPath, `${JSON.stringify(normalized, null, 2)}\n`, "utf8");
+  return { ...normalized, settingsPath };
+}
+
+function resetSettings() {
+  const settingsPath = getSettingsPath();
+  if (fs.existsSync(settingsPath)) fs.unlinkSync(settingsPath);
+  return { ...cloneDefaultSettings(), settingsPath };
+}
+
+function normalizeSavedSettings(settings = {}) {
+  const compression = settings.compression || {};
+  const paths = settings.paths || {};
+  const widthValue = compression.width === "original" ? "original" : Number(compression.width);
+
+  return {
+    compression: {
+      mode: [
+        "light",
+        "standard",
+        "high",
+        "outlook20",
+        "teams100",
+        "site300",
+        "targetCustom",
+        "custom",
+      ].includes(compression.mode) ? compression.mode : DEFAULT_SAVED_SETTINGS.compression.mode,
+      width: widthValue === "original" || Number.isFinite(widthValue) ? widthValue : DEFAULT_SAVED_SETTINGS.compression.width,
+      crf: clampNumber(Number(compression.crf), 18, 35, DEFAULT_SAVED_SETTINGS.compression.crf),
+      preset: ["veryfast", "fast", "medium", "slow"].includes(compression.preset)
+        ? compression.preset
+        : DEFAULT_SAVED_SETTINGS.compression.preset,
+      audio: ["64k", "96k", "128k"].includes(compression.audio) ? compression.audio : DEFAULT_SAVED_SETTINGS.compression.audio,
+      encoder: VIDEO_ENCODERS.has(compression.encoder) ? compression.encoder : DEFAULT_SAVED_SETTINGS.compression.encoder,
+      targetSizeMB: clampNumber(Number(compression.targetSizeMB), 1, 100000, DEFAULT_SAVED_SETTINGS.compression.targetSizeMB),
+    },
+    paths: {
+      lastInputDirectory: typeof paths.lastInputDirectory === "string" ? paths.lastInputDirectory : "",
+      lastOutputDirectory: typeof paths.lastOutputDirectory === "string" ? paths.lastOutputDirectory : "",
+    },
+  };
+}
+
+function cloneDefaultSettings() {
+  return JSON.parse(JSON.stringify(DEFAULT_SAVED_SETTINGS));
 }
 
 function validateInputFile(filePath) {

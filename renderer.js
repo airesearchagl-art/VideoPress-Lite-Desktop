@@ -22,6 +22,9 @@ const state = {
   batchRunning: false,
   stopAfterCurrent: false,
   activeBatchItemId: null,
+  savedSettings: null,
+  restoringSettings: false,
+  saveTimer: null,
 };
 
 const els = {
@@ -57,6 +60,8 @@ const els = {
   infoFrameRate: document.querySelector("#infoFrameRate"),
   settingsForm: document.querySelector("#settingsForm"),
   modeSelect: document.querySelector("#modeSelect"),
+  settingsStatus: document.querySelector("#settingsStatus"),
+  resetSettingsButton: document.querySelector("#resetSettingsButton"),
   targetSizeField: document.querySelector("#targetSizeField"),
   targetSizeInput: document.querySelector("#targetSizeInput"),
   widthSelect: document.querySelector("#widthSelect"),
@@ -92,9 +97,10 @@ const els = {
 
 init();
 
-function init() {
+async function init() {
   bindEvents();
   applyPreset();
+  await restoreSavedSettings();
   checkTools();
   window.videoPress.onProgress(updateProgress);
 }
@@ -106,6 +112,7 @@ function bindEvents() {
   els.compressAllButton.addEventListener("click", compressBatch);
   els.stopBatchButton.addEventListener("click", requestStopBatch);
   els.openBatchFolderButton.addEventListener("click", openOutputFolder);
+  els.resetSettingsButton.addEventListener("click", resetSavedSettings);
   els.batchTableBody.addEventListener("change", (event) => {
     if (event.target.matches("[data-batch-select]")) {
       const item = state.batchItems.find((entry) => entry.id === event.target.dataset.batchSelect);
@@ -117,8 +124,16 @@ function bindEvents() {
   els.modeSelect.addEventListener("change", () => {
     applyPreset();
     updateEstimate();
+    scheduleSaveSettings("設定保存済み");
   });
-  els.settingsForm.addEventListener("input", updateEstimate);
+  els.settingsForm.addEventListener("input", () => {
+    updateEstimate();
+    scheduleSaveSettings("設定保存済み");
+  });
+  els.settingsForm.addEventListener("change", () => {
+    updateEstimate();
+    scheduleSaveSettings("設定保存済み");
+  });
 
   ["dragenter", "dragover"].forEach((eventName) => {
     els.dropZone.addEventListener(eventName, (event) => {
@@ -191,7 +206,10 @@ async function selectVideo() {
   clearMessages();
   const selected = await window.videoPress.selectVideoFile();
   const filePaths = Array.isArray(selected) ? selected : selected ? [selected] : [];
-  if (filePaths.length > 0) await loadVideoFiles(filePaths);
+  if (filePaths.length > 0) {
+    await savePathSettings({ lastInputDirectory: directoryFromPath(filePaths[0]) }, "設定保存済み");
+    await loadVideoFiles(filePaths);
+  }
 }
 
 async function loadVideoFiles(filePaths) {
@@ -205,6 +223,9 @@ async function loadVideoFiles(filePaths) {
   els.batchPanel.classList.remove("hidden");
 
   const uniquePaths = [...new Set(filePaths)];
+  if (uniquePaths.length > 0) {
+    await savePathSettings({ lastInputDirectory: directoryFromPath(uniquePaths[0]) }, "設定保存済み");
+  }
   for (const filePath of uniquePaths) {
     const item = createBatchItem(filePath);
     state.batchItems.push(item);
@@ -273,6 +294,7 @@ async function compressVideo() {
     });
     state.outputDirectory = result.outputDirectory;
     renderResult(result);
+    await savePathSettings({ lastOutputDirectory: result.outputDirectory }, "設定保存済み");
   } catch (error) {
     showError(toMessage(error));
     setRunStatus("圧縮失敗", 0);
@@ -317,6 +339,7 @@ async function compressBatch() {
       item.result = result;
       state.outputDirectory = result.outputDirectory;
       renderResult(result);
+      await savePathSettings({ lastOutputDirectory: result.outputDirectory }, "設定保存済み");
     } catch (error) {
       item.status = "失敗";
       item.error = toMessage(error);
@@ -347,6 +370,7 @@ async function openOutputFolder() {
   if (!state.outputDirectory) return;
   try {
     await window.videoPress.openFolder(state.outputDirectory);
+    await savePathSettings({ lastOutputDirectory: state.outputDirectory }, "設定保存済み");
   } catch (error) {
     showError(toMessage(error));
   }
@@ -391,6 +415,107 @@ function getSettings() {
     audio: els.audioSelect.value,
     encoder: els.encoderSelect.value,
   };
+}
+
+async function restoreSavedSettings() {
+  try {
+    state.restoringSettings = true;
+    state.savedSettings = await window.videoPress.getSettings();
+    applyCompressionSettings(state.savedSettings.compression);
+    updateEstimate();
+    setSettingsStatus("前回設定を復元しました");
+  } catch (error) {
+    setSettingsStatus("設定復元に失敗しました");
+  } finally {
+    state.restoringSettings = false;
+  }
+}
+
+function applyCompressionSettings(compression = {}) {
+  if (compression.mode) els.modeSelect.value = compression.mode;
+  applyPreset();
+
+  if (compression.width !== undefined) {
+    els.widthSelect.value = String(compression.width);
+  }
+  if (compression.crf !== undefined) els.crfInput.value = compression.crf;
+  if (compression.preset) els.presetSelect.value = compression.preset;
+  if (compression.audio) els.audioSelect.value = compression.audio;
+  if (compression.encoder) els.encoderSelect.value = compression.encoder;
+  if (compression.targetSizeMB !== undefined) els.targetSizeInput.value = compression.targetSizeMB;
+
+  applyPresetVisibilityOnly();
+}
+
+function buildPersistentSettings(pathOverrides = {}) {
+  const current = state.savedSettings || {};
+  return {
+    compression: getSettings(),
+    paths: {
+      lastInputDirectory: current.paths?.lastInputDirectory || "",
+      lastOutputDirectory: current.paths?.lastOutputDirectory || "",
+      ...pathOverrides,
+    },
+  };
+}
+
+function scheduleSaveSettings(message) {
+  if (state.restoringSettings) return;
+  clearTimeout(state.saveTimer);
+  state.saveTimer = setTimeout(() => {
+    saveCurrentSettings(message);
+  }, 250);
+}
+
+async function saveCurrentSettings(message = "設定保存済み") {
+  if (state.restoringSettings) return;
+  try {
+    state.savedSettings = await window.videoPress.saveSettings(buildPersistentSettings());
+    setSettingsStatus(message);
+  } catch (error) {
+    setSettingsStatus("設定保存に失敗しました");
+  }
+}
+
+async function savePathSettings(pathOverrides, message = "設定保存済み") {
+  try {
+    state.savedSettings = await window.videoPress.saveSettings(buildPersistentSettings(pathOverrides));
+    setSettingsStatus(message);
+  } catch (error) {
+    setSettingsStatus("設定保存に失敗しました");
+  }
+}
+
+async function resetSavedSettings() {
+  try {
+    state.restoringSettings = true;
+    state.savedSettings = await window.videoPress.resetSettings();
+    applyCompressionSettings(state.savedSettings.compression);
+    updateEstimate();
+    setSettingsStatus("設定を初期化しました");
+  } catch (error) {
+    setSettingsStatus("設定初期化に失敗しました");
+  } finally {
+    state.restoringSettings = false;
+  }
+}
+
+function setSettingsStatus(message) {
+  els.settingsStatus.textContent = message;
+}
+
+function applyPresetVisibilityOnly() {
+  const customDetail = els.modeSelect.value === "custom";
+  const customTarget = els.modeSelect.value === "targetCustom";
+  const targetMode = isTargetSizeMode(els.modeSelect.value);
+
+  els.targetSizeField.classList.toggle("hidden", !customTarget);
+  els.widthSelect.disabled = !(customDetail || customTarget);
+  els.crfInput.disabled = !customDetail;
+  els.presetSelect.disabled = !customDetail;
+  els.audioSelect.disabled = !(customDetail || customTarget);
+  els.crfInput.closest("label").classList.toggle("hidden", targetMode);
+  els.presetSelect.closest("label").classList.toggle("hidden", targetMode);
 }
 
 function renderMetadata() {
@@ -702,6 +827,12 @@ function clampNumber(value, min, max, fallback) {
 
 function fileNameFromPath(filePath) {
   return String(filePath || "").split(/[\\/]/).pop() || "-";
+}
+
+function directoryFromPath(filePath) {
+  const text = String(filePath || "");
+  const index = Math.max(text.lastIndexOf("\\"), text.lastIndexOf("/"));
+  return index > 0 ? text.slice(0, index) : "";
 }
 
 function escapeHtml(value) {
