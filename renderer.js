@@ -101,6 +101,7 @@ const els = {
   videoPreview: document.querySelector("#videoPreview"),
   openFolderButton: document.querySelector("#openFolderButton"),
   appVersion: document.querySelector("#appVersion"),
+  updateStatus: document.querySelector("#updateStatus"),
 };
 
 init();
@@ -112,6 +113,7 @@ async function init() {
   await renderAppVersion();
   checkTools();
   window.videoPress.onProgress(updateProgress);
+  window.videoPress.onUpdateStatus(renderUpdateStatus);
 }
 
 async function renderAppVersion() {
@@ -188,6 +190,19 @@ function bindEvents() {
     const filePaths = files.map((file) => window.videoPress.getFilePath(file)).filter(Boolean);
     if (filePaths.length > 0) loadVideoFiles(filePaths);
   });
+}
+
+function renderUpdateStatus(status = {}) {
+  if (!status.message) {
+    els.updateStatus.classList.add("hidden");
+    els.updateStatus.textContent = "";
+    return;
+  }
+
+  els.updateStatus.textContent = status.message;
+  els.updateStatus.classList.remove("hidden", "error", "success");
+  els.updateStatus.classList.toggle("error", status.type === "error");
+  els.updateStatus.classList.toggle("success", status.type === "update-downloaded" || status.type === "update-not-available");
 }
 
 async function checkTools() {

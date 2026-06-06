@@ -403,11 +403,18 @@ progress::-webkit-progress-value {
   background: #000;
 }
 
-.app-version {
+.app-footer-status {
   position: fixed;
   right: 16px;
   bottom: 12px;
   z-index: 10;
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+}
+
+.app-version,
+.update-status {
   padding: 5px 9px;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.86);
@@ -416,6 +423,20 @@ progress::-webkit-progress-value {
   font-size: 0.76rem;
   font-weight: 700;
   box-shadow: 0 4px 14px rgba(31, 41, 51, 0.08);
+}
+
+.update-status {
+  max-width: min(340px, calc(100vw - 32px));
+  white-space: pre-line;
+  color: var(--accent-strong);
+}
+
+.update-status.success {
+  color: var(--success);
+}
+
+.update-status.error {
+  color: var(--danger);
 }
 
 .hidden {

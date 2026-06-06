@@ -3,6 +3,7 @@ const path = require("node:path");
 const fs = require("node:fs");
 const { spawn } = require("node:child_process");
 const { pathToFileURL } = require("node:url");
+const { autoUpdater } = require("electron-updater");
 
 const SUPPORTED_EXTENSIONS = new Set([".mp4", ".mov", ".m4v", ".avi", ".mkv", ".webm"]);
 const PRESETS = {
@@ -41,6 +42,7 @@ const DEFAULT_SAVED_SETTINGS = {
 
 let mainWindow;
 let currentProcess = null;
+let updaterConfigured = false;
 
 function createWindow() {
   const iconPath = path.join(__dirname, "assets", "icon.ico");
@@ -66,6 +68,8 @@ app.whenReady().then(() => {
   registerIpc();
   setupApplicationMenu();
   createWindow();
+  setupAutoUpdater();
+  checkForUpdatesAndNotify();
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -79,6 +83,7 @@ app.on("window-all-closed", () => {
 function registerIpc() {
   ipcMain.handle("app:check-tools", checkTools);
   ipcMain.handle("app:get-version", () => app.getVersion());
+  ipcMain.handle("updater:check", () => checkForUpdatesAndNotify({ manual: true }));
   ipcMain.handle("file:select-video", selectVideoFile);
   ipcMain.handle("folder:select-output", selectOutputFolder);
   ipcMain.handle("video:probe", (_event, filePath) => probeVideo(filePath));
@@ -116,9 +121,126 @@ function showAboutDialog() {
     title: "バージョン情報",
     message: `VideoPress Lite Desktop v${app.getVersion()}`,
     detail: "ローカルPC上で動画を圧縮するWindows向けデスクトップアプリです。",
-    buttons: ["OK"],
+    buttons: ["閉じる", "アップデート確認"],
+    defaultId: 0,
+    cancelId: 0,
     icon: path.join(__dirname, "assets", "icon.png"),
+  }).then((result) => {
+    if (result.response === 1) {
+      checkForUpdatesAndNotify({ manual: true });
+    }
   });
+}
+
+function setupAutoUpdater() {
+  if (updaterConfigured) return;
+  updaterConfigured = true;
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on("checking-for-update", () => {
+    writeUpdaterLog("更新確認");
+    sendUpdateStatus({ type: "checking-for-update", message: "更新確認中..." });
+  });
+
+  autoUpdater.on("update-available", (info) => {
+    writeUpdaterLog(`更新発見: ${info.version || "unknown"}`);
+    sendUpdateStatus({
+      type: "update-available",
+      version: info.version,
+      message: "新しいバージョンがあります",
+    });
+  });
+
+  autoUpdater.on("update-not-available", (info) => {
+    writeUpdaterLog(`更新なし: ${info.version || "unknown"}`);
+    sendUpdateStatus({
+      type: "update-not-available",
+      version: info.version,
+      message: "最新バージョンです",
+    });
+  });
+
+  autoUpdater.on("download-progress", (progress) => {
+    const percent = Math.round(progress.percent || 0);
+    if (percent === 0 || percent === 100 || percent % 10 === 0) {
+      writeUpdaterLog(`ダウンロード中: ${percent}%`);
+    }
+    sendUpdateStatus({
+      type: "download-progress",
+      percent,
+      message: `ダウンロード中 ${percent}%`,
+    });
+  });
+
+  autoUpdater.on("update-downloaded", async (info) => {
+    writeUpdaterLog(`ダウンロード完了: ${info.version || "unknown"}`);
+    sendUpdateStatus({
+      type: "update-downloaded",
+      version: info.version,
+      message: "更新準備完了\n再起動すると更新されます",
+    });
+
+    const result = await dialog.showMessageBox(mainWindow, {
+      type: "info",
+      title: "更新準備完了",
+      message: "新しいバージョンがインストール可能です。\n\n今すぐ再起動しますか？",
+      buttons: ["再起動して更新", "後で"],
+      defaultId: 0,
+      cancelId: 1,
+      icon: path.join(__dirname, "assets", "icon.png"),
+    });
+
+    if (result.response === 0) {
+      writeUpdaterLog("再起動して更新");
+      autoUpdater.quitAndInstall();
+    }
+  });
+
+  autoUpdater.on("error", (error) => {
+    writeUpdaterLog(`エラー: ${error?.message || String(error)}`);
+    sendUpdateStatus({
+      type: "error",
+      message: "アップデート確認に失敗しました",
+      error: error?.message || String(error),
+    });
+  });
+}
+
+function checkForUpdatesAndNotify(options = {}) {
+  const manual = Boolean(options.manual);
+  if (!app.isPackaged) {
+    writeUpdaterLog("開発モードのため更新確認をスキップ");
+    sendUpdateStatus({
+      type: "update-skipped",
+      message: manual ? "開発モードでは更新確認を実行しません" : "",
+    });
+    return Promise.resolve({ skipped: true });
+  }
+
+  writeUpdaterLog(manual ? "手動更新確認開始" : "起動時更新確認開始");
+  if (manual) {
+    sendUpdateStatus({ type: "checking-for-update", message: "更新確認中..." });
+    return autoUpdater.checkForUpdates();
+  }
+  return autoUpdater.checkForUpdatesAndNotify();
+}
+
+function sendUpdateStatus(payload) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("update-status", payload);
+  }
+}
+
+function writeUpdaterLog(message) {
+  try {
+    const logDirectory = path.join(app.getPath("userData"), "logs");
+    fs.mkdirSync(logDirectory, { recursive: true });
+    const line = `[${new Date().toISOString()}] ${message}\n`;
+    fs.appendFileSync(path.join(logDirectory, "updater.log"), line, "utf8");
+  } catch {
+    // Logging must not block startup or update checks.
+  }
 }
 
 async function checkTools() {

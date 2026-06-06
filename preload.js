@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld("videoPress", {
   getFilePath: (file) => webUtils.getPathForFile(file),
   checkTools: () => ipcRenderer.invoke("app:check-tools"),
   getVersion: () => ipcRenderer.invoke("app:get-version"),
+  checkForUpdates: () => ipcRenderer.invoke("updater:check"),
   selectVideoFile: () => ipcRenderer.invoke("file:select-video"),
   selectOutputFolder: () => ipcRenderer.invoke("folder:select-output"),
   probeVideo: (filePath) => ipcRenderer.invoke("video:probe", filePath),
@@ -16,5 +17,10 @@ contextBridge.exposeInMainWorld("videoPress", {
     const listener = (_event, payload) => callback(payload);
     ipcRenderer.on("video:progress", listener);
     return () => ipcRenderer.removeListener("video:progress", listener);
+  },
+  onUpdateStatus: (callback) => {
+    const listener = (_event, data) => callback(data);
+    ipcRenderer.on("update-status", listener);
+    return () => ipcRenderer.removeListener("update-status", listener);
   },
 });
