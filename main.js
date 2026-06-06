@@ -30,6 +30,12 @@ const DEFAULT_SAVED_SETTINGS = {
   paths: {
     lastInputDirectory: "",
     lastOutputDirectory: "",
+    recentOutputDirectories: [],
+  },
+  output: {
+    mode: "sameAsSource",
+    directory: "",
+    filenameRule: "compressed",
   },
 };
 
@@ -69,6 +75,7 @@ app.on("window-all-closed", () => {
 function registerIpc() {
   ipcMain.handle("app:check-tools", checkTools);
   ipcMain.handle("file:select-video", selectVideoFile);
+  ipcMain.handle("folder:select-output", selectOutputFolder);
   ipcMain.handle("video:probe", (_event, filePath) => probeVideo(filePath));
   ipcMain.handle("video:compress", (_event, payload) => compressVideo(payload));
   ipcMain.handle("folder:open", (_event, folderPath) => openFolder(folderPath));
@@ -156,6 +163,23 @@ async function selectVideoFile() {
   return result.filePaths;
 }
 
+async function selectOutputFolder() {
+  const savedSettings = getSavedSettings();
+  const defaultPath = savedSettings.output.directory && fs.existsSync(savedSettings.output.directory)
+    ? savedSettings.output.directory
+    : savedSettings.paths.lastOutputDirectory && fs.existsSync(savedSettings.paths.lastOutputDirectory)
+      ? savedSettings.paths.lastOutputDirectory
+      : undefined;
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: "出力フォルダを選択",
+    properties: ["openDirectory"],
+    defaultPath,
+  });
+
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return result.filePaths[0];
+}
+
 async function probeVideo(filePath) {
   validateInputFile(filePath);
   const ffprobePath = resolveToolPath("ffprobe");
@@ -198,11 +222,8 @@ async function compressVideo(payload) {
   validateInputFile(payload.filePath);
   const metadata = await probeVideo(payload.filePath);
   const ffmpegPath = resolveToolPath("ffmpeg");
-  const outputPath = buildOutputPath(payload.filePath);
+  const outputPath = buildOutputPath(payload.filePath, payload.output);
 
-  if (fs.existsSync(outputPath)) {
-    throw new UserError("出力ファイルが既に存在します。既存ファイルを移動または削除してから再実行してください。");
-  }
   ensureWritable(path.dirname(outputPath));
 
   const settings = normalizeSettings(payload.settings, metadata);
@@ -391,9 +412,42 @@ function getGpuInfo() {
   });
 }
 
-function buildOutputPath(inputPath) {
+function buildOutputPath(inputPath, output = {}) {
   const parsed = path.parse(inputPath);
-  return path.join(parsed.dir, `${parsed.name}-compressed.mp4`);
+  const normalized = normalizeOutputSettings(output);
+  const outputDirectory = normalized.mode === "specifiedFolder" ? normalized.directory : parsed.dir;
+  if (normalized.mode === "specifiedFolder" && !outputDirectory) {
+    throw new UserError("出力フォルダを選択してください。");
+  }
+  if (!fs.existsSync(outputDirectory)) {
+    throw new UserError("出力フォルダが見つかりません。");
+  }
+
+  const baseName = `${parsed.name}${getFilenameSuffix(normalized.filenameRule)}`;
+  return buildUniqueOutputPath(outputDirectory, baseName, ".mp4");
+}
+
+function getFilenameSuffix(filenameRule) {
+  if (filenameRule === "vp") return "_vp";
+  if (filenameRule === "date") return `_${formatDateForFilename(new Date())}`;
+  return "-compressed";
+}
+
+function formatDateForFilename(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}${month}${day}`;
+}
+
+function buildUniqueOutputPath(directory, baseName, ext) {
+  let candidate = path.join(directory, `${baseName}${ext}`);
+  let index = 2;
+  while (fs.existsSync(candidate)) {
+    candidate = path.join(directory, `${baseName}-${index}${ext}`);
+    index += 1;
+  }
+  return candidate;
 }
 
 function emitProgress(text, duration, startedAt) {
@@ -457,7 +511,13 @@ function resetSettings() {
 function normalizeSavedSettings(settings = {}) {
   const compression = settings.compression || {};
   const paths = settings.paths || {};
+  const output = settings.output || {};
   const widthValue = compression.width === "original" ? "original" : Number(compression.width);
+  const recentOutputDirectories = Array.isArray(paths.recentOutputDirectories)
+    ? [...new Set(paths.recentOutputDirectories
+      .filter((entry) => typeof entry === "string" && entry.trim())
+      .map((entry) => entry.trim()))].slice(0, 5)
+    : [];
 
   return {
     compression: {
@@ -483,7 +543,19 @@ function normalizeSavedSettings(settings = {}) {
     paths: {
       lastInputDirectory: typeof paths.lastInputDirectory === "string" ? paths.lastInputDirectory : "",
       lastOutputDirectory: typeof paths.lastOutputDirectory === "string" ? paths.lastOutputDirectory : "",
+      recentOutputDirectories,
     },
+    output: normalizeOutputSettings(output),
+  };
+}
+
+function normalizeOutputSettings(output = {}) {
+  return {
+    mode: output.mode === "specifiedFolder" ? "specifiedFolder" : DEFAULT_SAVED_SETTINGS.output.mode,
+    directory: typeof output.directory === "string" ? output.directory : "",
+    filenameRule: ["compressed", "vp", "date"].includes(output.filenameRule)
+      ? output.filenameRule
+      : DEFAULT_SAVED_SETTINGS.output.filenameRule,
   };
 }
 

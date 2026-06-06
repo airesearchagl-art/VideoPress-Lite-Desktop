@@ -69,6 +69,13 @@ const els = {
   presetSelect: document.querySelector("#presetSelect"),
   audioSelect: document.querySelector("#audioSelect"),
   encoderSelect: document.querySelector("#encoderSelect"),
+  outputModeSelect: document.querySelector("#outputModeSelect"),
+  outputFolderControls: document.querySelector("#outputFolderControls"),
+  selectOutputFolderButton: document.querySelector("#selectOutputFolderButton"),
+  selectedOutputFolder: document.querySelector("#selectedOutputFolder"),
+  recentOutputField: document.querySelector("#recentOutputField"),
+  recentOutputSelect: document.querySelector("#recentOutputSelect"),
+  filenameRuleSelect: document.querySelector("#filenameRuleSelect"),
   estimateOriginal: document.querySelector("#estimateOriginal"),
   estimateOutput: document.querySelector("#estimateOutput"),
   estimateRate: document.querySelector("#estimateRate"),
@@ -113,6 +120,22 @@ function bindEvents() {
   els.stopBatchButton.addEventListener("click", requestStopBatch);
   els.openBatchFolderButton.addEventListener("click", openOutputFolder);
   els.resetSettingsButton.addEventListener("click", resetSavedSettings);
+  els.selectOutputFolderButton.addEventListener("click", selectOutputFolder);
+  els.outputModeSelect.addEventListener("change", () => {
+    updateOutputControls();
+    scheduleSaveSettings("設定保存済み");
+  });
+  els.recentOutputSelect.addEventListener("change", async () => {
+    if (!els.recentOutputSelect.value) return;
+    els.outputModeSelect.value = "specifiedFolder";
+    els.selectedOutputFolder.textContent = els.recentOutputSelect.value;
+    updateOutputControls();
+    await savePathSettings(
+      { lastOutputDirectory: els.recentOutputSelect.value },
+      "設定保存済み",
+      { mode: "specifiedFolder", directory: els.recentOutputSelect.value },
+    );
+  });
   els.batchTableBody.addEventListener("change", (event) => {
     if (event.target.matches("[data-batch-select]")) {
       const item = state.batchItems.find((entry) => entry.id === event.target.dataset.batchSelect);
@@ -291,6 +314,7 @@ async function compressVideo() {
     const result = await window.videoPress.compressVideo({
       filePath: state.metadata.filePath,
       settings: getSettings(),
+      output: getOutputSettings(),
     });
     state.outputDirectory = result.outputDirectory;
     renderResult(result);
@@ -330,6 +354,7 @@ async function compressBatch() {
       const result = await window.videoPress.compressVideo({
         filePath: item.filePath,
         settings,
+        output: getOutputSettings(),
       });
       item.status = "完了";
       item.progress = 100;
@@ -376,6 +401,23 @@ async function openOutputFolder() {
   }
 }
 
+async function selectOutputFolder() {
+  try {
+    const folderPath = await window.videoPress.selectOutputFolder();
+    if (!folderPath) return;
+    els.outputModeSelect.value = "specifiedFolder";
+    els.selectedOutputFolder.textContent = folderPath;
+    updateOutputControls();
+    await savePathSettings(
+      { lastOutputDirectory: folderPath },
+      "設定保存済み",
+      { mode: "specifiedFolder", directory: folderPath },
+    );
+  } catch (error) {
+    showError(toMessage(error));
+  }
+}
+
 function applyPreset() {
   const settings = PRESET_SETTINGS[els.modeSelect.value];
   const targetSettings = TARGET_SIZE_SETTINGS[els.modeSelect.value];
@@ -417,11 +459,21 @@ function getSettings() {
   };
 }
 
+function getOutputSettings() {
+  const selectedDirectory = els.selectedOutputFolder.textContent === "-" ? "" : els.selectedOutputFolder.textContent;
+  return {
+    mode: els.outputModeSelect.value,
+    directory: selectedDirectory,
+    filenameRule: els.filenameRuleSelect.value,
+  };
+}
+
 async function restoreSavedSettings() {
   try {
     state.restoringSettings = true;
     state.savedSettings = await window.videoPress.getSettings();
     applyCompressionSettings(state.savedSettings.compression);
+    applyOutputSettings(state.savedSettings.output, state.savedSettings.paths);
     updateEstimate();
     setSettingsStatus("前回設定を復元しました");
   } catch (error) {
@@ -447,15 +499,22 @@ function applyCompressionSettings(compression = {}) {
   applyPresetVisibilityOnly();
 }
 
-function buildPersistentSettings(pathOverrides = {}) {
+function buildPersistentSettings(pathOverrides = {}, outputOverrides = {}) {
   const current = state.savedSettings || {};
+  const output = { ...getOutputSettings(), ...outputOverrides };
+  const recentOutputDirectories = buildRecentOutputDirectories(
+    pathOverrides.lastOutputDirectory || output.directory,
+    current.paths?.recentOutputDirectories || [],
+  );
   return {
     compression: getSettings(),
     paths: {
       lastInputDirectory: current.paths?.lastInputDirectory || "",
       lastOutputDirectory: current.paths?.lastOutputDirectory || "",
+      recentOutputDirectories,
       ...pathOverrides,
     },
+    output,
   };
 }
 
@@ -477,26 +536,62 @@ async function saveCurrentSettings(message = "設定保存済み") {
   }
 }
 
-async function savePathSettings(pathOverrides, message = "設定保存済み") {
-  try {
-    state.savedSettings = await window.videoPress.saveSettings(buildPersistentSettings(pathOverrides));
-    setSettingsStatus(message);
-  } catch (error) {
-    setSettingsStatus("設定保存に失敗しました");
-  }
-}
-
 async function resetSavedSettings() {
   try {
     state.restoringSettings = true;
     state.savedSettings = await window.videoPress.resetSettings();
     applyCompressionSettings(state.savedSettings.compression);
+    applyOutputSettings(state.savedSettings.output, state.savedSettings.paths);
     updateEstimate();
     setSettingsStatus("設定を初期化しました");
   } catch (error) {
     setSettingsStatus("設定初期化に失敗しました");
   } finally {
     state.restoringSettings = false;
+  }
+}
+
+function applyOutputSettings(output = {}, paths = {}) {
+  els.outputModeSelect.value = output.mode || "sameAsSource";
+  els.selectedOutputFolder.textContent = output.directory || "-";
+  if (output.filenameRule) els.filenameRuleSelect.value = output.filenameRule;
+  renderRecentOutputDirectories(paths.recentOutputDirectories || []);
+  updateOutputControls();
+}
+
+async function savePathSettings(pathOverrides, message = "設定保存済み", outputOverrides = {}) {
+  try {
+    state.savedSettings = await window.videoPress.saveSettings(buildPersistentSettings(pathOverrides, outputOverrides));
+    applyOutputSettings(state.savedSettings.output, state.savedSettings.paths);
+    setSettingsStatus(message);
+  } catch (error) {
+    setSettingsStatus("設定保存に失敗しました");
+  }
+}
+
+function buildRecentOutputDirectories(newDirectory, currentDirectories = []) {
+  const directories = Array.isArray(currentDirectories) ? currentDirectories : [];
+  const normalizedNewDirectory = typeof newDirectory === "string" ? newDirectory.trim() : "";
+  const merged = normalizedNewDirectory ? [normalizedNewDirectory, ...directories] : directories;
+  return [...new Set(merged.filter(Boolean))].slice(0, 5);
+}
+
+function renderRecentOutputDirectories(directories = []) {
+  els.recentOutputSelect.innerHTML = '<option value="">選択してください</option>';
+  for (const directory of directories.slice(0, 5)) {
+    const option = document.createElement("option");
+    option.value = directory;
+    option.textContent = directory;
+    els.recentOutputSelect.appendChild(option);
+  }
+  els.recentOutputField.classList.toggle("hidden", directories.length === 0);
+}
+
+function updateOutputControls() {
+  const specified = els.outputModeSelect.value === "specifiedFolder";
+  els.outputFolderControls.classList.toggle("hidden", !specified);
+  if (!specified) {
+    els.recentOutputSelect.value = "";
   }
 }
 

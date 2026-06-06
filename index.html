@@ -160,6 +160,34 @@
                   <option value="av1_nvenc">GPU(AV1 NVENC)</option>
                 </select>
               </label>
+              <label>
+                <span>出力先モード</span>
+                <select id="outputModeSelect">
+                  <option value="sameAsSource" selected>元動画と同じフォルダ</option>
+                  <option value="specifiedFolder">指定フォルダ</option>
+                </select>
+              </label>
+              <div id="outputFolderControls" class="output-folder-controls hidden">
+                <button id="selectOutputFolderButton" class="secondary-button" type="button">出力フォルダを選択</button>
+                <div class="selected-path">
+                  <span>選択中の出力フォルダ</span>
+                  <strong id="selectedOutputFolder">未選択</strong>
+                </div>
+                <label id="recentOutputField" class="hidden">
+                  <span>最近使った出力フォルダ</span>
+                  <select id="recentOutputSelect">
+                    <option value="">選択してください</option>
+                  </select>
+                </label>
+              </div>
+              <label>
+                <span>ファイル名ルール</span>
+                <select id="filenameRuleSelect">
+                  <option value="compressed" selected>-compressed</option>
+                  <option value="vp">_vp</option>
+                  <option value="date">_日付</option>
+                </select>
+              </label>
             </form>
           </article>
         </section>
