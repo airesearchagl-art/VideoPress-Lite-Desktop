@@ -10,6 +10,11 @@ const PRESETS = {
   standard: { width: 1280, crf: 28, preset: "veryfast", audio: "96k" },
   high: { width: 1920, crf: 23, preset: "fast", audio: "128k" },
 };
+const TARGET_SIZE_PRESETS = {
+  outlook20: { targetSizeMB: 20, width: 720, audio: "64k" },
+  teams100: { targetSizeMB: 100, width: 1280, audio: "96k" },
+  site300: { targetSizeMB: 300, width: 1920, audio: "128k" },
+};
 const NVENC_ENCODERS = ["h264_nvenc", "hevc_nvenc", "av1_nvenc"];
 const VIDEO_ENCODERS = new Set(["cpu", ...NVENC_ENCODERS]);
 
@@ -177,7 +182,7 @@ async function compressVideo(payload) {
   }
   ensureWritable(path.dirname(outputPath));
 
-  const settings = normalizeSettings(payload.settings);
+  const settings = normalizeSettings(payload.settings, metadata);
   if (settings.encoder !== "cpu") {
     const support = await getEncoderSupport(ffmpegPath);
     if (!support[settings.encoder]) {
@@ -223,6 +228,7 @@ async function compressVideo(payload) {
         previewUrl,
         beforeSize: metadata.size,
         afterSize: outputStat.size,
+        target: settings.target || null,
       });
     });
   });
@@ -235,7 +241,37 @@ function buildFfmpegArgs(inputPath, outputPath, settings) {
     args.push("-vf", `scale=${settings.width}:-2`);
   }
 
-  if (settings.encoder === "cpu") {
+  if (settings.modeType === "targetSize") {
+    const videoBitrate = `${settings.target.videoBitrateKbps}k`;
+    const bufsize = `${settings.target.videoBitrateKbps * 2}k`;
+    if (settings.encoder === "cpu") {
+      args.push(
+        "-c:v",
+        "libx264",
+        "-b:v",
+        videoBitrate,
+        "-maxrate",
+        videoBitrate,
+        "-bufsize",
+        bufsize,
+        "-preset",
+        settings.preset,
+      );
+    } else {
+      args.push(
+        "-c:v",
+        settings.encoder,
+        "-b:v",
+        videoBitrate,
+        "-maxrate",
+        videoBitrate,
+        "-bufsize",
+        bufsize,
+        "-preset",
+        "p5",
+      );
+    }
+  } else if (settings.encoder === "cpu") {
     args.push("-c:v", "libx264", "-preset", settings.preset, "-crf", String(settings.crf));
   } else {
     args.push("-c:v", settings.encoder, "-preset", "p5", "-cq", String(settings.crf));
@@ -246,10 +282,18 @@ function buildFfmpegArgs(inputPath, outputPath, settings) {
   return args;
 }
 
-function normalizeSettings(settings = {}) {
+function normalizeSettings(settings = {}, metadata = {}) {
   const encoder = VIDEO_ENCODERS.has(settings.encoder) ? settings.encoder : "cpu";
   if (settings.mode && PRESETS[settings.mode]) {
     return { ...PRESETS[settings.mode], encoder };
+  }
+
+  if (settings.mode && TARGET_SIZE_PRESETS[settings.mode]) {
+    return normalizeTargetSizeSettings({ ...settings, ...TARGET_SIZE_PRESETS[settings.mode], encoder }, metadata);
+  }
+
+  if (settings.mode === "targetCustom") {
+    return normalizeTargetSizeSettings({ ...settings, encoder }, metadata);
   }
 
   return {
@@ -258,6 +302,31 @@ function normalizeSettings(settings = {}) {
     preset: ["veryfast", "fast", "medium", "slow"].includes(settings.preset) ? settings.preset : "veryfast",
     audio: ["64k", "96k", "128k"].includes(settings.audio) ? settings.audio : "96k",
     encoder,
+  };
+}
+
+function normalizeTargetSizeSettings(settings, metadata) {
+  const durationSeconds = Math.max(Number(metadata.duration || 0), 1);
+  const targetSizeMB = clampNumber(Number(settings.targetSizeMB), 1, 100000, 100);
+  const audio = ["64k", "96k", "128k"].includes(settings.audio) ? settings.audio : "96k";
+  const audioBitrateKbps = Number.parseInt(audio, 10);
+  const targetTotalBitrateKbps = Math.max(1, Math.round((targetSizeMB * 8192) / durationSeconds));
+  const rawVideoBitrateKbps = targetTotalBitrateKbps - audioBitrateKbps;
+  const videoBitrateKbps = Math.max(300, Math.round(rawVideoBitrateKbps));
+
+  return {
+    modeType: "targetSize",
+    width: settings.width || 1280,
+    preset: "veryfast",
+    audio,
+    encoder: settings.encoder,
+    target: {
+      targetSizeMB,
+      audioBitrateKbps,
+      targetTotalBitrateKbps,
+      videoBitrateKbps,
+      achievable: videoBitrateKbps >= 500,
+    },
   };
 }
 

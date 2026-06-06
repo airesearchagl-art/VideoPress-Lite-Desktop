@@ -64,8 +64,16 @@
                   <option value="light">軽量モード</option>
                   <option value="standard" selected>標準モード</option>
                   <option value="high">高画質モード</option>
-                  <option value="custom">カスタム</option>
+                  <option value="outlook20">Outlook添付 20MB</option>
+                  <option value="teams100">Teams共有 100MB</option>
+                  <option value="site300">現場共有 300MB</option>
+                  <option value="targetCustom">カスタム容量指定</option>
+                  <option value="custom">カスタム詳細設定</option>
                 </select>
+              </label>
+              <label id="targetSizeField" class="hidden">
+                <span>目標容量(MB)</span>
+                <input id="targetSizeInput" type="number" min="1" max="100000" step="1" value="50" />
               </label>
               <label>
                 <span>出力解像度</span>
@@ -121,7 +129,12 @@
               <div><dt>元容量</dt><dd id="estimateOriginal">-</dd></div>
               <div><dt>推定容量</dt><dd id="estimateOutput">-</dd></div>
               <div><dt>推定削減率</dt><dd id="estimateRate">-</dd></div>
+              <div><dt>目標容量</dt><dd id="estimateTargetSize">-</dd></div>
+              <div><dt>推定動画ビットレート</dt><dd id="estimateVideoBitrate">-</dd></div>
+              <div><dt>推定総ビットレート</dt><dd id="estimateTotalBitrate">-</dd></div>
+              <div><dt>目標達成見込み</dt><dd id="estimateTargetStatus">-</dd></div>
             </dl>
+            <p id="targetWarning" class="notice warning hidden">目標容量が小さすぎるため、画質が大きく低下する可能性があります。</p>
             <p class="muted">推定値です。実際の容量とは異なる場合があります。</p>
           </article>
 
@@ -149,6 +162,9 @@
             <div><dt>圧縮前</dt><dd id="resultBefore">-</dd></div>
             <div><dt>圧縮後</dt><dd id="resultAfter">-</dd></div>
             <div><dt>削減容量</dt><dd id="resultSaved">-</dd></div>
+            <div><dt>目標容量</dt><dd id="resultTargetSize">-</dd></div>
+            <div><dt>目標との差分</dt><dd id="resultTargetDiff">-</dd></div>
+            <div><dt>達成状況</dt><dd id="resultTargetStatus">-</dd></div>
             <div><dt>出力ファイル</dt><dd id="resultPath">-</dd></div>
           </dl>
           <video id="videoPreview" class="video-preview hidden" controls></video>

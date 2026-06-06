@@ -3,6 +3,11 @@ const PRESET_SETTINGS = {
   standard: { width: "1280", crf: 28, preset: "veryfast", audio: "96k" },
   high: { width: "1920", crf: 23, preset: "fast", audio: "128k" },
 };
+const TARGET_SIZE_SETTINGS = {
+  outlook20: { targetSizeMB: 20, width: "720", audio: "64k" },
+  teams100: { targetSizeMB: 100, width: "1280", audio: "96k" },
+  site300: { targetSizeMB: 300, width: "1920", audio: "128k" },
+};
 const NVENC_LABELS = {
   h264_nvenc: "GPU(H264 NVENC)",
   hevc_nvenc: "GPU(H265 NVENC)",
@@ -33,6 +38,8 @@ const els = {
   infoFrameRate: document.querySelector("#infoFrameRate"),
   settingsForm: document.querySelector("#settingsForm"),
   modeSelect: document.querySelector("#modeSelect"),
+  targetSizeField: document.querySelector("#targetSizeField"),
+  targetSizeInput: document.querySelector("#targetSizeInput"),
   widthSelect: document.querySelector("#widthSelect"),
   crfInput: document.querySelector("#crfInput"),
   presetSelect: document.querySelector("#presetSelect"),
@@ -41,6 +48,11 @@ const els = {
   estimateOriginal: document.querySelector("#estimateOriginal"),
   estimateOutput: document.querySelector("#estimateOutput"),
   estimateRate: document.querySelector("#estimateRate"),
+  estimateTargetSize: document.querySelector("#estimateTargetSize"),
+  estimateVideoBitrate: document.querySelector("#estimateVideoBitrate"),
+  estimateTotalBitrate: document.querySelector("#estimateTotalBitrate"),
+  estimateTargetStatus: document.querySelector("#estimateTargetStatus"),
+  targetWarning: document.querySelector("#targetWarning"),
   compressButton: document.querySelector("#compressButton"),
   runStatus: document.querySelector("#runStatus"),
   elapsedText: document.querySelector("#elapsedText"),
@@ -51,6 +63,9 @@ const els = {
   resultBefore: document.querySelector("#resultBefore"),
   resultAfter: document.querySelector("#resultAfter"),
   resultSaved: document.querySelector("#resultSaved"),
+  resultTargetSize: document.querySelector("#resultTargetSize"),
+  resultTargetDiff: document.querySelector("#resultTargetDiff"),
+  resultTargetStatus: document.querySelector("#resultTargetStatus"),
   resultPath: document.querySelector("#resultPath"),
   videoPreview: document.querySelector("#videoPreview"),
   openFolderButton: document.querySelector("#openFolderButton"),
@@ -205,7 +220,10 @@ async function openOutputFolder() {
 
 function applyPreset() {
   const settings = PRESET_SETTINGS[els.modeSelect.value];
-  const custom = els.modeSelect.value === "custom";
+  const targetSettings = TARGET_SIZE_SETTINGS[els.modeSelect.value];
+  const customDetail = els.modeSelect.value === "custom";
+  const customTarget = els.modeSelect.value === "targetCustom";
+  const targetMode = isTargetSizeMode(els.modeSelect.value);
 
   if (settings) {
     els.widthSelect.value = settings.width;
@@ -214,16 +232,26 @@ function applyPreset() {
     els.audioSelect.value = settings.audio;
   }
 
-  els.widthSelect.disabled = !custom;
-  els.crfInput.disabled = !custom;
-  els.presetSelect.disabled = !custom;
-  els.audioSelect.disabled = !custom;
+  if (targetSettings) {
+    els.widthSelect.value = targetSettings.width;
+    els.audioSelect.value = targetSettings.audio;
+    els.targetSizeInput.value = targetSettings.targetSizeMB;
+  }
+
+  els.targetSizeField.classList.toggle("hidden", !customTarget);
+  els.widthSelect.disabled = !(customDetail || customTarget);
+  els.crfInput.disabled = !customDetail;
+  els.presetSelect.disabled = !customDetail;
+  els.audioSelect.disabled = !(customDetail || customTarget);
+  els.crfInput.closest("label").classList.toggle("hidden", targetMode);
+  els.presetSelect.closest("label").classList.toggle("hidden", targetMode);
 }
 
 function getSettings() {
   return {
     mode: els.modeSelect.value,
     width: els.widthSelect.value === "original" ? "original" : Number(els.widthSelect.value),
+    targetSizeMB: Number(els.targetSizeInput.value),
     crf: Number(els.crfInput.value),
     preset: els.presetSelect.value,
     audio: els.audioSelect.value,
@@ -248,17 +276,20 @@ function updateEstimate() {
     els.estimateOriginal.textContent = "-";
     els.estimateOutput.textContent = "-";
     els.estimateRate.textContent = "-";
+    renderTargetEstimate(null);
     return;
   }
 
   const settings = getSettings();
-  const estimated = estimateOutputSize(state.metadata, settings);
+  const targetEstimate = calculateTargetEstimate(state.metadata, settings);
+  const estimated = targetEstimate ? targetEstimate.estimatedBytes : estimateOutputSize(state.metadata, settings);
   const saved = Math.max(0, state.metadata.size - estimated);
   const rate = state.metadata.size > 0 ? (saved / state.metadata.size) * 100 : 0;
 
   els.estimateOriginal.textContent = formatBytes(state.metadata.size);
   els.estimateOutput.textContent = formatBytes(estimated);
   els.estimateRate.textContent = `${rate.toFixed(1)}%`;
+  renderTargetEstimate(targetEstimate);
 }
 
 function estimateOutputSize(meta, settings) {
@@ -273,6 +304,67 @@ function estimateOutputSize(meta, settings) {
   return Math.round(((videoMbps + audioMbps) * 1_000_000 * duration) / 8);
 }
 
+function calculateTargetEstimate(meta, settings) {
+  if (!isTargetSizeMode(settings.mode)) return null;
+
+  const preset = TARGET_SIZE_SETTINGS[settings.mode];
+  const targetSizeMB = preset ? preset.targetSizeMB : clampNumber(Number(settings.targetSizeMB), 1, 100000, 50);
+  const audio = preset ? preset.audio : settings.audio;
+  const duration = Math.max(meta.duration || 0, 1);
+  const audioBitrateKbps = Number.parseInt(audio, 10);
+  const targetTotalBitrateKbps = Math.max(1, Math.round((targetSizeMB * 8192) / duration));
+  const videoBitrateKbps = Math.max(300, Math.round(targetTotalBitrateKbps - audioBitrateKbps));
+  const actualTotalBitrateKbps = videoBitrateKbps + audioBitrateKbps;
+
+  return {
+    targetSizeMB,
+    videoBitrateKbps,
+    targetTotalBitrateKbps,
+    actualTotalBitrateKbps,
+    achievable: videoBitrateKbps >= 500,
+    estimatedBytes: Math.round(((actualTotalBitrateKbps * 1000) * duration) / 8),
+  };
+}
+
+function renderTargetEstimate(estimate) {
+  if (!estimate) {
+    els.estimateTargetSize.textContent = "-";
+    els.estimateVideoBitrate.textContent = "-";
+    els.estimateTotalBitrate.textContent = "-";
+    els.estimateTargetStatus.textContent = "-";
+    els.targetWarning.classList.add("hidden");
+    return;
+  }
+
+  els.estimateTargetSize.textContent = `${formatNumber(estimate.targetSizeMB)} MB`;
+  els.estimateVideoBitrate.textContent = `${formatNumber(estimate.videoBitrateKbps)} kbps`;
+  els.estimateTotalBitrate.textContent = `${formatNumber(estimate.actualTotalBitrateKbps)} kbps`;
+  els.estimateTargetStatus.textContent = estimate.achievable ? "おおむね達成可能" : "画質低下の可能性あり";
+  els.targetWarning.classList.toggle("hidden", estimate.achievable);
+}
+
+function isTargetSizeMode(mode) {
+  return mode === "targetCustom" || Object.prototype.hasOwnProperty.call(TARGET_SIZE_SETTINGS, mode);
+}
+
+function renderTargetResult(result) {
+  if (!result?.target) {
+    els.resultTargetSize.textContent = "-";
+    els.resultTargetDiff.textContent = "-";
+    els.resultTargetStatus.textContent = "-";
+    return;
+  }
+
+  const targetBytes = result.target.targetSizeMB * 1024 * 1024;
+  const diffBytes = result.afterSize - targetBytes;
+  const achieved = result.afterSize <= targetBytes;
+  const sign = diffBytes > 0 ? "+" : diffBytes < 0 ? "-" : "";
+
+  els.resultTargetSize.textContent = `${formatNumber(result.target.targetSizeMB)} MB`;
+  els.resultTargetDiff.textContent = `${sign}${formatBytes(Math.abs(diffBytes))}`;
+  els.resultTargetStatus.textContent = achieved ? "達成" : "未達成";
+}
+
 function updateProgress(progress) {
   setRunStatus(progress.status, progress.percent);
   els.elapsedText.textContent = `経過時間: ${formatDuration(progress.elapsedSeconds || 0)}`;
@@ -284,6 +376,7 @@ function renderResult(result) {
   els.resultBefore.textContent = formatBytes(result.beforeSize);
   els.resultAfter.textContent = formatBytes(result.afterSize);
   els.resultSaved.textContent = formatBytes(saved);
+  renderTargetResult(result);
   els.resultPath.textContent = result.outputPath;
   if (result.previewUrl) {
     els.videoPreview.src = result.previewUrl;
@@ -301,6 +394,7 @@ function setRunStatus(status, percent) {
 
 function resetResult() {
   state.outputDirectory = null;
+  renderTargetResult(null);
   els.videoPreview.pause();
   els.videoPreview.removeAttribute("src");
   els.videoPreview.load();
@@ -352,4 +446,9 @@ function pad2(value) {
 
 function formatNumber(value) {
   return new Intl.NumberFormat("ja-JP", { maximumFractionDigits: 0 }).format(value);
+}
+
+function clampNumber(value, min, max, fallback) {
+  if (!Number.isFinite(value)) return fallback;
+  return Math.min(max, Math.max(min, value));
 }
