@@ -158,3 +158,31 @@ dist/
 - 途中停止は現在ファイル完了後に停止します
 - 完了後に出力フォルダを開けます
 - 失敗ファイル一覧と結果サマリーを表示します
+
+## GitHub Releases
+
+一般ユーザーは GitHub Releases から `VideoPress Lite Desktop Setup.exe` をダウンロードし、インストーラーを実行するだけで利用できます。FFmpeg / ffprobe は同梱されます。
+
+### Release build
+
+```bash
+npm.cmd run dist
+```
+
+生成物:
+
+```text
+dist/
+  VideoPress Lite Desktop Setup.exe
+  latest.yml
+```
+
+### Release procedure
+
+1. `package.json` の version を確認します。
+2. `npm.cmd run check` を実行します。
+3. `npm.cmd run dist` を実行します。
+4. `dist/VideoPress Lite Desktop Setup.exe` が生成されたことを確認します。
+5. GitHub Releases で `v1.0.0` の Release を作成します。
+6. `VideoPress Lite Desktop Setup.exe` を Release asset としてアップロードします。
+7. 必要に応じて `latest.yml` もアップロードします。

@@ -1,12 +1,14 @@
 {
   "name": "videopress-lite-desktop",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "VideoPress Lite Desktop - local video compression with native FFmpeg",
+  "author": "AI Research AGL",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "check": "node --check main.js && node --check preload.js && node --check renderer.js",
-    "build": "electron-builder --win nsis && node scripts/fix-latest-yml.js"
+    "build": "npm run dist",
+    "dist": "electron-builder --win nsis && node scripts/fix-latest-yml.js"
   },
   "build": {
     "appId": "jp.airesearchagl.videopress-lite-desktop",
@@ -14,6 +16,13 @@
     "directories": {
       "output": "dist"
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "airesearchagl-art",
+        "repo": "VideoPress-Lite-Desktop"
+      }
+    ],
     "files": [
       "main.js",
       "preload.js",
