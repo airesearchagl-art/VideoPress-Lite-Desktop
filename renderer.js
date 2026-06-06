@@ -52,6 +52,7 @@ const els = {
   resultAfter: document.querySelector("#resultAfter"),
   resultSaved: document.querySelector("#resultSaved"),
   resultPath: document.querySelector("#resultPath"),
+  videoPreview: document.querySelector("#videoPreview"),
   openFolderButton: document.querySelector("#openFolderButton"),
 };
 
@@ -284,6 +285,10 @@ function renderResult(result) {
   els.resultAfter.textContent = formatBytes(result.afterSize);
   els.resultSaved.textContent = formatBytes(saved);
   els.resultPath.textContent = result.outputPath;
+  if (result.previewUrl) {
+    els.videoPreview.src = result.previewUrl;
+    els.videoPreview.classList.remove("hidden");
+  }
   els.resultPanel.classList.remove("hidden");
 }
 
@@ -296,6 +301,10 @@ function setRunStatus(status, percent) {
 
 function resetResult() {
   state.outputDirectory = null;
+  els.videoPreview.pause();
+  els.videoPreview.removeAttribute("src");
+  els.videoPreview.load();
+  els.videoPreview.classList.add("hidden");
   els.resultPanel.classList.add("hidden");
 }
 

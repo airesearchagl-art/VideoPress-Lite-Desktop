@@ -2,6 +2,7 @@ const { app, BrowserWindow, dialog, ipcMain, shell } = require("electron");
 const path = require("node:path");
 const fs = require("node:fs");
 const { spawn } = require("node:child_process");
+const { pathToFileURL } = require("node:url");
 
 const SUPPORTED_EXTENSIONS = new Set([".mp4", ".mov", ".m4v", ".avi", ".mkv", ".webm"]);
 const PRESETS = {
@@ -209,6 +210,7 @@ async function compressVideo(payload) {
       }
 
       const outputStat = fs.statSync(outputPath);
+      const previewUrl = pathToFileURL(outputPath).href;
       sendProgress({
         status: "完了",
         percent: 100,
@@ -218,6 +220,7 @@ async function compressVideo(payload) {
       resolve({
         outputPath,
         outputDirectory: path.dirname(outputPath),
+        previewUrl,
         beforeSize: metadata.size,
         afterSize: outputStat.size,
       });
