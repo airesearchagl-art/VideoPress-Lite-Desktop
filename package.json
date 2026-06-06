@@ -1,6 +1,6 @@
 {
   "name": "videopress-lite-desktop",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "VideoPress Lite Desktop - local video compression with native FFmpeg",
   "author": "AI Research AGL",
   "main": "main.js",
@@ -29,7 +29,8 @@
       "renderer.js",
       "index.html",
       "style.css",
-      "package.json"
+      "package.json",
+      "assets/**/*"
     ],
     "extraResources": [
       {
@@ -42,6 +43,7 @@
       }
     ],
     "win": {
+      "icon": "assets/icon.ico",
       "target": [
         {
           "target": "nsis",
@@ -53,6 +55,8 @@
       "artifactName": "VideoPress Lite Desktop Setup.exe"
     },
     "nsis": {
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,

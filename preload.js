@@ -3,6 +3,7 @@ const { contextBridge, ipcRenderer, webUtils } = require("electron");
 contextBridge.exposeInMainWorld("videoPress", {
   getFilePath: (file) => webUtils.getPathForFile(file),
   checkTools: () => ipcRenderer.invoke("app:check-tools"),
+  getVersion: () => ipcRenderer.invoke("app:get-version"),
   selectVideoFile: () => ipcRenderer.invoke("file:select-video"),
   selectOutputFolder: () => ipcRenderer.invoke("folder:select-output"),
   probeVideo: (filePath) => ipcRenderer.invoke("video:probe", filePath),

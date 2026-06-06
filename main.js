@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, shell } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain, Menu, shell } = require("electron");
 const path = require("node:path");
 const fs = require("node:fs");
 const { spawn } = require("node:child_process");
@@ -43,12 +43,14 @@ let mainWindow;
 let currentProcess = null;
 
 function createWindow() {
+  const iconPath = path.join(__dirname, "assets", "icon.ico");
   mainWindow = new BrowserWindow({
     width: 1120,
     height: 820,
     minWidth: 920,
     minHeight: 680,
     title: "VideoPress Lite Desktop",
+    icon: iconPath,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -60,7 +62,9 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  app.setAppUserModelId("jp.airesearchagl.videopress-lite-desktop");
   registerIpc();
+  setupApplicationMenu();
   createWindow();
 
   app.on("activate", () => {
@@ -74,6 +78,7 @@ app.on("window-all-closed", () => {
 
 function registerIpc() {
   ipcMain.handle("app:check-tools", checkTools);
+  ipcMain.handle("app:get-version", () => app.getVersion());
   ipcMain.handle("file:select-video", selectVideoFile);
   ipcMain.handle("folder:select-output", selectOutputFolder);
   ipcMain.handle("video:probe", (_event, filePath) => probeVideo(filePath));
@@ -82,6 +87,38 @@ function registerIpc() {
   ipcMain.handle("settings:get", getSavedSettings);
   ipcMain.handle("settings:save", (_event, settings) => saveSettings(settings));
   ipcMain.handle("settings:reset", resetSettings);
+}
+
+function setupApplicationMenu() {
+  const template = [
+    {
+      label: "ファイル",
+      submenu: [
+        { role: "quit", label: "終了" },
+      ],
+    },
+    {
+      label: "ヘルプ",
+      submenu: [
+        {
+          label: "バージョン情報",
+          click: () => showAboutDialog(),
+        },
+      ],
+    },
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
+function showAboutDialog() {
+  dialog.showMessageBox(mainWindow, {
+    type: "info",
+    title: "バージョン情報",
+    message: `VideoPress Lite Desktop v${app.getVersion()}`,
+    detail: "ローカルPC上で動画を圧縮するWindows向けデスクトップアプリです。",
+    buttons: ["OK"],
+    icon: path.join(__dirname, "assets", "icon.png"),
+  });
 }
 
 async function checkTools() {

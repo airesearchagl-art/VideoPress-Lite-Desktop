@@ -100,6 +100,7 @@ const els = {
   resultPath: document.querySelector("#resultPath"),
   videoPreview: document.querySelector("#videoPreview"),
   openFolderButton: document.querySelector("#openFolderButton"),
+  appVersion: document.querySelector("#appVersion"),
 };
 
 init();
@@ -108,8 +109,18 @@ async function init() {
   bindEvents();
   applyPreset();
   await restoreSavedSettings();
+  await renderAppVersion();
   checkTools();
   window.videoPress.onProgress(updateProgress);
+}
+
+async function renderAppVersion() {
+  try {
+    const version = await window.videoPress.getVersion();
+    els.appVersion.textContent = `VideoPress Lite Desktop v${version}`;
+  } catch {
+    els.appVersion.textContent = "VideoPress Lite Desktop";
+  }
 }
 
 function bindEvents() {
