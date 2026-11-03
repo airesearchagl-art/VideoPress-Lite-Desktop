@@ -1,0 +1,98 @@
+{
+  "code": "520bad025c339fb351ef8a4cae1f9aed851f1b0f",
+  "metadata": {
+    "version": "1.3.0",
+    "path": "VideoPress Lite Desktop Setup.exe",
+    "bytes": 177624800,
+    "sha512": "49kwXYSkVwikx+eExJmIkoVFxrHA10OegcMawTGdbp0luck/Bb20JeJOY0VBbOvh+iSGdFbCH7pprAzRQtAs+g==",
+    "path_matches": true,
+    "sha512_matches": true,
+    "files_matches": true
+  },
+  "fixer": {
+    "before_to_after": true,
+    "already_normalized": true,
+    "executed": false
+  },
+  "blockmap": {
+    "version": "2",
+    "files": [
+      {
+        "name": "file",
+        "offset": 0,
+        "block_count": 8463,
+        "checksum_count": 8463,
+        "total_size": 177624800,
+        "end": 177624800,
+        "first_checksum_bytes": 18
+      }
+    ],
+    "checksum_digest_verified": false,
+    "differential_update_executed": false
+  },
+  "asar_source": {
+    "main.js": {
+      "equals_host_bytes": true,
+      "LF_equals_C_git_blob": true,
+      "sha256": "0ea45080f2b2b434815d042da5fb86b656acd3eaf8b10216936e60f58f693ee3"
+    },
+    "preload.js": {
+      "equals_host_bytes": true,
+      "LF_equals_C_git_blob": true,
+      "sha256": "8cf6dcb38265a33f65efc0bac51b5f353bf7f2f3a6fa4465cd718cb62ff45bc4"
+    },
+    "renderer.js": {
+      "equals_host_bytes": true,
+      "LF_equals_C_git_blob": true,
+      "sha256": "4fefb9659847e16c98c208e94806a9905e7084ea239ea4752fee3de37fafa3b5"
+    },
+    "index.html": {
+      "equals_host_bytes": true,
+      "LF_equals_C_git_blob": true,
+      "sha256": "5e8b00c3042185459bbea34ea88e0f65740841ff993c4700c5598ec074473080"
+    },
+    "style.css": {
+      "equals_host_bytes": true,
+      "LF_equals_C_git_blob": true,
+      "sha256": "1b218c0a569dc408a6248ee61b7753d4986ddd002115f89a823ab8b94eb8f313"
+    }
+  },
+  "asar_package": {
+    "name": "videopress-lite-desktop",
+    "version": "1.3.0",
+    "description": "VideoPress Lite Desktop - local video compression with native FFmpeg",
+    "author": "AI Research AGL",
+    "main": "main.js",
+    "dependencies": {
+      "electron-updater": "6.8.12"
+    }
+  },
+  "packaged_dependencies": {
+    "electron-updater": "6.8.12",
+    "js-yaml": "4.3.2",
+    "builder-util-runtime": "9.7.1"
+  },
+  "packaged_minimatch_paths": [],
+  "ffmpeg": {
+    "ffmpeg.exe": {
+      "source_bytes": 101457920,
+      "packaged_bytes": 101457920,
+      "match": true,
+      "sha256": "228d7a8556258de907fdb55f36850078ebc7680b84ec30d84ea02e99bec1d1eb",
+      "executed": false
+    },
+    "ffprobe.exe": {
+      "source_bytes": 101251072,
+      "packaged_bytes": 101251072,
+      "match": true,
+      "sha256": "0fde260f5abd35c9cafd96f594cc76365a780c1b73a90e35b6a3409ea1db1bf0",
+      "executed": false
+    }
+  },
+  "packaged_PE": {
+    "bytes": 249788928,
+    "signature": "50450000",
+    "machine": "0x8664",
+    "executed": false
+  }
+}
