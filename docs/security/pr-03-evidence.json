@@ -1,0 +1,1191 @@
+{
+  "observedAt": "2026-11-03T12:49:03.430Z",
+  "base": "2e8a4e59fc3c93a65ee61a3034144c7573c9727d",
+  "authorEvidenceOnly": true,
+  "hostNode": "v24.22.1",
+  "npm": "11.19.1",
+  "lockSHA256": "d6426b5cc99469d8155cf86b5eb8baed18a81f36b5a5d17dc1ab89d3359fe317",
+  "versions": {
+    "electron": {
+      "before": "33.4.11",
+      "after": "45.2.1"
+    },
+    "electron-builder": {
+      "before": "26.8.1",
+      "after": "26.18.1"
+    },
+    "electron-updater": {
+      "before": "6.8.9",
+      "after": "6.8.12"
+    },
+    "builder-util-runtime": {
+      "before": "9.5.1",
+      "after": "9.7.1"
+    },
+    "tar": {
+      "before": "7.5.16",
+      "after": "7.5.22"
+    },
+    "undici": {
+      "before": "6.26.0",
+      "after": "7.30.1"
+    }
+  },
+  "jsYaml": {
+    "before": [
+      {
+        "path": "node_modules/js-yaml",
+        "version": "4.2.0",
+        "dev": false
+      }
+    ],
+    "after": [
+      {
+        "path": "node_modules/js-yaml",
+        "version": "4.3.2",
+        "dev": false
+      }
+    ]
+  },
+  "audit": {
+    "beforeFull": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 11,
+        "high": 14,
+        "critical": 1,
+        "total": 26
+      },
+      "packages": [
+        {
+          "name": "@electron/asar",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/@electron/asar"
+          ],
+          "viaPackages": [
+            "glob",
+            "minimatch"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "@electron/universal",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/@electron/universal"
+          ],
+          "viaPackages": [
+            "@electron/asar",
+            "dir-compare",
+            "minimatch"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "@xmldom/xmldom",
+          "severity": "high",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/@xmldom/xmldom"
+          ],
+          "viaPackages": [],
+          "advisories": [
+            {
+              "id": "GHSA-6gmq-8vp8-gcm6",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-6gmq-8vp8-gcm6"
+            },
+            {
+              "id": "GHSA-w2rr-34g9-rvrj",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-w2rr-34g9-rvrj"
+            },
+            {
+              "id": "GHSA-4w3w-2rp5-g8jm",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-4w3w-2rp5-g8jm"
+            },
+            {
+              "id": "GHSA-c7q8-3ch8-vqpv",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-c7q8-3ch8-vqpv"
+            },
+            {
+              "id": "GHSA-27p8-2357-5qqv",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-27p8-2357-5qqv"
+            },
+            {
+              "id": "GHSA-6h8r-xr42-gp59",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-6h8r-xr42-gp59"
+            },
+            {
+              "id": "GHSA-8344-3jmq-59r6",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-8344-3jmq-59r6"
+            },
+            {
+              "id": "GHSA-x4fp-j954-r2f4",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-x4fp-j954-r2f4"
+            },
+            {
+              "id": "GHSA-965w-775f-mr7g",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-965w-775f-mr7g"
+            },
+            {
+              "id": "GHSA-93r5-fhx6-vmg9",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-93r5-fhx6-vmg9"
+            }
+          ]
+        },
+        {
+          "name": "app-builder-lib",
+          "severity": "high",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/app-builder-lib"
+          ],
+          "viaPackages": [
+            "@electron/asar",
+            "@electron/universal",
+            "builder-util",
+            "builder-util-runtime",
+            "dmg-builder",
+            "ejs",
+            "electron-builder-squirrel-windows",
+            "electron-publish",
+            "minimatch"
+          ],
+          "advisories": [
+            {
+              "id": "GHSA-7g7r-gx96-252g",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-7g7r-gx96-252g"
+            }
+          ]
+        },
+        {
+          "name": "brace-expansion",
+          "severity": "high",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/@electron/asar/node_modules/brace-expansion",
+            "node_modules/@electron/universal/node_modules/brace-expansion",
+            "node_modules/brace-expansion",
+            "node_modules/dir-compare/node_modules/brace-expansion",
+            "node_modules/filelist/node_modules/brace-expansion",
+            "node_modules/glob/node_modules/brace-expansion"
+          ],
+          "viaPackages": [],
+          "advisories": [
+            {
+              "id": "GHSA-3jxr-9vmj-r5cp",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-3jxr-9vmj-r5cp"
+            },
+            {
+              "id": "GHSA-mh99-v99m-4gvg",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-mh99-v99m-4gvg"
+            },
+            {
+              "id": "GHSA-rgw5-rvv9-x895",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-rgw5-rvv9-x895"
+            },
+            {
+              "id": "GHSA-q2hr-2g5m-vwhr",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-q2hr-2g5m-vwhr"
+            },
+            {
+              "id": "GHSA-qhr7-859c-m2p7",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-qhr7-859c-m2p7"
+            },
+            {
+              "id": "GHSA-6j4f-fj2g-mc7p",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-6j4f-fj2g-mc7p"
+            }
+          ]
+        },
+        {
+          "name": "builder-util",
+          "severity": "high",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/builder-util"
+          ],
+          "viaPackages": [
+            "builder-util-runtime"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "builder-util-runtime",
+          "severity": "high",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/builder-util-runtime"
+          ],
+          "viaPackages": [],
+          "advisories": [
+            {
+              "id": "GHSA-p2f4-r6v6-j797",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-p2f4-r6v6-j797"
+            }
+          ]
+        },
+        {
+          "name": "dir-compare",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/dir-compare"
+          ],
+          "viaPackages": [
+            "minimatch"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "dmg-builder",
+          "severity": "high",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/dmg-builder"
+          ],
+          "viaPackages": [
+            "app-builder-lib",
+            "builder-util"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "ejs",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/ejs"
+          ],
+          "viaPackages": [
+            "jake"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "electron",
+          "severity": "high",
+          "isDirect": true,
+          "nodes": [
+            "node_modules/electron"
+          ],
+          "viaPackages": [
+            "extract-zip"
+          ],
+          "advisories": [
+            {
+              "id": "GHSA-vmqv-hx8q-j7mg",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-vmqv-hx8q-j7mg"
+            },
+            {
+              "id": "GHSA-5rqw-r77c-jp79",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-5rqw-r77c-jp79"
+            },
+            {
+              "id": "GHSA-xj5x-m3f3-5x3h",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-xj5x-m3f3-5x3h"
+            },
+            {
+              "id": "GHSA-r5p7-gp4j-qhrx",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-r5p7-gp4j-qhrx"
+            },
+            {
+              "id": "GHSA-3c8v-cfp5-9885",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-3c8v-cfp5-9885"
+            },
+            {
+              "id": "GHSA-xwr5-m59h-vwqr",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-xwr5-m59h-vwqr"
+            },
+            {
+              "id": "GHSA-532v-xpq5-8h95",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-532v-xpq5-8h95"
+            },
+            {
+              "id": "GHSA-mwmh-mq4g-g6gr",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-mwmh-mq4g-g6gr"
+            },
+            {
+              "id": "GHSA-9w97-2464-8783",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-9w97-2464-8783"
+            },
+            {
+              "id": "GHSA-8337-3p73-46f4",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-8337-3p73-46f4"
+            },
+            {
+              "id": "GHSA-jjp3-mq3x-295m",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-jjp3-mq3x-295m"
+            },
+            {
+              "id": "GHSA-jfqx-fxh3-c62j",
+              "severity": "low",
+              "url": "https://github.com/advisories/GHSA-jfqx-fxh3-c62j"
+            },
+            {
+              "id": "GHSA-4p4r-m79c-wq3v",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-4p4r-m79c-wq3v"
+            },
+            {
+              "id": "GHSA-9899-m83m-qhpj",
+              "severity": "low",
+              "url": "https://github.com/advisories/GHSA-9899-m83m-qhpj"
+            },
+            {
+              "id": "GHSA-8x5q-pvf5-64mp",
+              "severity": "low",
+              "url": "https://github.com/advisories/GHSA-8x5q-pvf5-64mp"
+            },
+            {
+              "id": "GHSA-f37v-82c4-4x64",
+              "severity": "low",
+              "url": "https://github.com/advisories/GHSA-f37v-82c4-4x64"
+            },
+            {
+              "id": "GHSA-f3pv-wv63-48x8",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-f3pv-wv63-48x8"
+            },
+            {
+              "id": "GHSA-9wfr-w7mm-pc7f",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-9wfr-w7mm-pc7f"
+            },
+            {
+              "id": "GHSA-jm7p-cc5g-qwxx",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-jm7p-cc5g-qwxx"
+            },
+            {
+              "id": "GHSA-v3j7-r9gq-3gjw",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-v3j7-r9gq-3gjw"
+            },
+            {
+              "id": "GHSA-m55f-7gqj-fr98",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-m55f-7gqj-fr98"
+            },
+            {
+              "id": "GHSA-5c9j-mhmv-5xgx",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-5c9j-mhmv-5xgx"
+            },
+            {
+              "id": "GHSA-h7rp-cf8h-j98x",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-h7rp-cf8h-j98x"
+            },
+            {
+              "id": "GHSA-x8rc-wpg4-grpf",
+              "severity": "low",
+              "url": "https://github.com/advisories/GHSA-x8rc-wpg4-grpf"
+            },
+            {
+              "id": "GHSA-9pf5-hg6p-4pwp",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-9pf5-hg6p-4pwp"
+            },
+            {
+              "id": "GHSA-pfmc-3mgc-p6fp",
+              "severity": "low",
+              "url": "https://github.com/advisories/GHSA-pfmc-3mgc-p6fp"
+            },
+            {
+              "id": "GHSA-v64r-4m7r-3mvq",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-v64r-4m7r-3mvq"
+            },
+            {
+              "id": "GHSA-v93f-fgjr-hjrj",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-v93f-fgjr-hjrj"
+            },
+            {
+              "id": "GHSA-9f4c-93c8-jc8g",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-9f4c-93c8-jc8g"
+            },
+            {
+              "id": "GHSA-p2rr-rvmm-c5fp",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-p2rr-rvmm-c5fp"
+            },
+            {
+              "id": "GHSA-f2r8-jv7c-xqmp",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-f2r8-jv7c-xqmp"
+            },
+            {
+              "id": "GHSA-ff2p-hmqr-hxm4",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-ff2p-hmqr-hxm4"
+            },
+            {
+              "id": "GHSA-4f78-qhmw-8j8m",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-4f78-qhmw-8j8m"
+            },
+            {
+              "id": "GHSA-hq2x-r82h-9wj4",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-hq2x-r82h-9wj4"
+            },
+            {
+              "id": "GHSA-gr2m-v5gq-v685",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-gr2m-v5gq-v685"
+            },
+            {
+              "id": "GHSA-j84w-jfhq-vhvj",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-j84w-jfhq-vhvj"
+            },
+            {
+              "id": "GHSA-vv43-5jgx-7qv8",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-vv43-5jgx-7qv8"
+            },
+            {
+              "id": "GHSA-9qh4-3jw8-366w",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-9qh4-3jw8-366w"
+            },
+            {
+              "id": "GHSA-fw47-9c62-h3vw",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-fw47-9c62-h3vw"
+            },
+            {
+              "id": "GHSA-2p8c-gr87-2676",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-2p8c-gr87-2676"
+            },
+            {
+              "id": "GHSA-x562-297c-g43g",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-x562-297c-g43g"
+            },
+            {
+              "id": "GHSA-98mx-cjp9-gchm",
+              "severity": "low",
+              "url": "https://github.com/advisories/GHSA-98mx-cjp9-gchm"
+            },
+            {
+              "id": "GHSA-3qxv-5xgr-q7w9",
+              "severity": "low",
+              "url": "https://github.com/advisories/GHSA-3qxv-5xgr-q7w9"
+            },
+            {
+              "id": "GHSA-h3v5-h239-pg29",
+              "severity": "low",
+              "url": "https://github.com/advisories/GHSA-h3v5-h239-pg29"
+            },
+            {
+              "id": "GHSA-997q-gvvc-jwmx",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-997q-gvvc-jwmx"
+            },
+            {
+              "id": "GHSA-jr5w-w6x2-84p9",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-jr5w-w6x2-84p9"
+            }
+          ]
+        },
+        {
+          "name": "electron-builder",
+          "severity": "high",
+          "isDirect": true,
+          "nodes": [
+            "node_modules/electron-builder"
+          ],
+          "viaPackages": [
+            "app-builder-lib",
+            "builder-util",
+            "builder-util-runtime",
+            "dmg-builder"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "electron-builder-squirrel-windows",
+          "severity": "high",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/electron-builder-squirrel-windows"
+          ],
+          "viaPackages": [
+            "app-builder-lib",
+            "builder-util",
+            "electron-winstaller"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "electron-publish",
+          "severity": "high",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/electron-publish"
+          ],
+          "viaPackages": [
+            "builder-util",
+            "builder-util-runtime"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "electron-winstaller",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/electron-winstaller"
+          ],
+          "viaPackages": [
+            "@electron/asar",
+            "temp"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "extract-zip",
+          "severity": "high",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/extract-zip"
+          ],
+          "viaPackages": [],
+          "advisories": [
+            {
+              "id": "GHSA-jmr9-qjv8-65gv",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-jmr9-qjv8-65gv"
+            },
+            {
+              "id": "GHSA-7pqw-9j4j-h8q3",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-7pqw-9j4j-h8q3"
+            }
+          ]
+        },
+        {
+          "name": "filelist",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/filelist"
+          ],
+          "viaPackages": [
+            "minimatch"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "form-data",
+          "severity": "high",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/form-data"
+          ],
+          "viaPackages": [],
+          "advisories": [
+            {
+              "id": "GHSA-hmw2-7cc7-3qxx",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-hmw2-7cc7-3qxx"
+            }
+          ]
+        },
+        {
+          "name": "glob",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/glob"
+          ],
+          "viaPackages": [
+            "minimatch"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "jake",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/jake"
+          ],
+          "viaPackages": [
+            "filelist"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "js-yaml",
+          "severity": "high",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/js-yaml"
+          ],
+          "viaPackages": [],
+          "advisories": [
+            {
+              "id": "GHSA-52cp-r559-cp3m",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-52cp-r559-cp3m"
+            },
+            {
+              "id": "GHSA-5p4m-2wfm-xmqj",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-5p4m-2wfm-xmqj"
+            },
+            {
+              "id": "GHSA-2883-xcg3-v3hh",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-2883-xcg3-v3hh"
+            }
+          ]
+        },
+        {
+          "name": "minimatch",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/@electron/asar/node_modules/minimatch",
+            "node_modules/@electron/universal/node_modules/minimatch",
+            "node_modules/dir-compare/node_modules/minimatch",
+            "node_modules/filelist/node_modules/minimatch",
+            "node_modules/glob/node_modules/minimatch",
+            "node_modules/minimatch"
+          ],
+          "viaPackages": [],
+          "advisories": [
+            {
+              "id": "GHSA-g3hv-75wg-m249",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249"
+            }
+          ]
+        },
+        {
+          "name": "rimraf",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/rimraf"
+          ],
+          "viaPackages": [
+            "glob"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "tar",
+          "severity": "critical",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/tar"
+          ],
+          "viaPackages": [],
+          "advisories": [
+            {
+              "id": "GHSA-w8wr-v893-vjvp",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-w8wr-v893-vjvp"
+            },
+            {
+              "id": "GHSA-23hp-3jrh-7fpw",
+              "severity": "critical",
+              "url": "https://github.com/advisories/GHSA-23hp-3jrh-7fpw"
+            },
+            {
+              "id": "GHSA-8x88-c5mf-7j5w",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-8x88-c5mf-7j5w"
+            },
+            {
+              "id": "GHSA-gvwx-54wh-qm9j",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-gvwx-54wh-qm9j"
+            },
+            {
+              "id": "GHSA-r292-9mhp-454m",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-r292-9mhp-454m"
+            }
+          ]
+        },
+        {
+          "name": "temp",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/temp"
+          ],
+          "viaPackages": [
+            "rimraf"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "undici",
+          "severity": "high",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/undici"
+          ],
+          "viaPackages": [],
+          "advisories": [
+            {
+              "id": "GHSA-p88m-4jfj-68fv",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-p88m-4jfj-68fv"
+            },
+            {
+              "id": "GHSA-vxpw-j846-p89q",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-vxpw-j846-p89q"
+            },
+            {
+              "id": "GHSA-g8m3-5g58-fq7m",
+              "severity": "low",
+              "url": "https://github.com/advisories/GHSA-g8m3-5g58-fq7m"
+            },
+            {
+              "id": "GHSA-8xcm-r25x-g524",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-8xcm-r25x-g524"
+            },
+            {
+              "id": "GHSA-m8rv-5g2x-5cg5",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-m8rv-5g2x-5cg5"
+            },
+            {
+              "id": "GHSA-v3r7-h72x-cjcm",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-v3r7-h72x-cjcm"
+            },
+            {
+              "id": "GHSA-35p6-xmwp-9g52",
+              "severity": "low",
+              "url": "https://github.com/advisories/GHSA-35p6-xmwp-9g52"
+            },
+            {
+              "id": "GHSA-3wwx-pv8p-q78v",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-3wwx-pv8p-q78v"
+            },
+            {
+              "id": "GHSA-r53p-7pc4-xj5r",
+              "severity": "low",
+              "url": "https://github.com/advisories/GHSA-r53p-7pc4-xj5r"
+            },
+            {
+              "id": "GHSA-rfgv-xxqx-mfg5",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-rfgv-xxqx-mfg5"
+            },
+            {
+              "id": "GHSA-4qv8-2p9j-2685",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-4qv8-2p9j-2685"
+            },
+            {
+              "id": "GHSA-xjj6-f33q-929c",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-xjj6-f33q-929c"
+            },
+            {
+              "id": "GHSA-2m5v-pch6-74hx",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-2m5v-pch6-74hx"
+            },
+            {
+              "id": "GHSA-qrxm-fqhp-jwvm",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-qrxm-fqhp-jwvm"
+            },
+            {
+              "id": "GHSA-9fm3-97px-rjf6",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-9fm3-97px-rjf6"
+            }
+          ]
+        }
+      ]
+    },
+    "beforeOmitDev": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 1,
+        "critical": 0,
+        "total": 1
+      },
+      "packages": [
+        {
+          "name": "js-yaml",
+          "severity": "high",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/js-yaml"
+          ],
+          "viaPackages": [],
+          "advisories": [
+            {
+              "id": "GHSA-52cp-r559-cp3m",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-52cp-r559-cp3m"
+            },
+            {
+              "id": "GHSA-5p4m-2wfm-xmqj",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-5p4m-2wfm-xmqj"
+            },
+            {
+              "id": "GHSA-2883-xcg3-v3hh",
+              "severity": "high",
+              "url": "https://github.com/advisories/GHSA-2883-xcg3-v3hh"
+            }
+          ]
+        }
+      ]
+    },
+    "afterFull": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 15,
+        "high": 0,
+        "critical": 0,
+        "total": 15
+      },
+      "packages": [
+        {
+          "name": "@electron/asar",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/@electron/asar"
+          ],
+          "viaPackages": [
+            "glob",
+            "minimatch"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "@electron/universal",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/@electron/universal"
+          ],
+          "viaPackages": [
+            "@electron/asar",
+            "dir-compare",
+            "minimatch"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "app-builder-lib",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/app-builder-lib"
+          ],
+          "viaPackages": [
+            "@electron/asar",
+            "@electron/universal",
+            "dmg-builder",
+            "ejs",
+            "electron-builder-squirrel-windows",
+            "minimatch"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "dir-compare",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/dir-compare"
+          ],
+          "viaPackages": [
+            "minimatch"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "dmg-builder",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/dmg-builder"
+          ],
+          "viaPackages": [
+            "app-builder-lib"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "ejs",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/ejs"
+          ],
+          "viaPackages": [
+            "jake"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "electron-builder",
+          "severity": "moderate",
+          "isDirect": true,
+          "nodes": [
+            "node_modules/electron-builder"
+          ],
+          "viaPackages": [
+            "app-builder-lib",
+            "dmg-builder"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "electron-builder-squirrel-windows",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/electron-builder-squirrel-windows"
+          ],
+          "viaPackages": [
+            "app-builder-lib",
+            "electron-winstaller"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "electron-winstaller",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/electron-winstaller"
+          ],
+          "viaPackages": [
+            "@electron/asar",
+            "temp"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "filelist",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/filelist"
+          ],
+          "viaPackages": [
+            "minimatch"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "glob",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/glob"
+          ],
+          "viaPackages": [
+            "minimatch"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "jake",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/jake"
+          ],
+          "viaPackages": [
+            "filelist"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "minimatch",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/@electron/asar/node_modules/minimatch",
+            "node_modules/@electron/universal/node_modules/minimatch",
+            "node_modules/dir-compare/node_modules/minimatch",
+            "node_modules/filelist/node_modules/minimatch",
+            "node_modules/glob/node_modules/minimatch",
+            "node_modules/minimatch"
+          ],
+          "viaPackages": [],
+          "advisories": [
+            {
+              "id": "GHSA-g3hv-75wg-m249",
+              "severity": "moderate",
+              "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249"
+            }
+          ]
+        },
+        {
+          "name": "rimraf",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/rimraf"
+          ],
+          "viaPackages": [
+            "glob"
+          ],
+          "advisories": []
+        },
+        {
+          "name": "temp",
+          "severity": "moderate",
+          "isDirect": false,
+          "nodes": [
+            "node_modules/temp"
+          ],
+          "viaPackages": [
+            "rimraf"
+          ],
+          "advisories": []
+        }
+      ]
+    },
+    "afterOmitDev": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "packages": []
+    }
+  },
+  "devSmoke": {
+    "pass": true,
+    "versions": {
+      "electron": "45.2.1",
+      "node": "24.22.1",
+      "chrome": "156.0.8078.75"
+    },
+    "isPackaged": false,
+    "preferences": {
+      "sandbox": true,
+      "contextIsolation": true,
+      "nodeIntegration": false
+    },
+    "updaterCalls": [],
+    "tests": [
+      "Electron/Node versions",
+      "sandboxed preload bridge",
+      "tool discovery",
+      "manual update skipped without updater calls",
+      "isolated settings save/load/reset",
+      "synthetic CPU compression and probe",
+      "progress listener and unsubscribe",
+      "local video preview decoding",
+      "webUtils callable for synthetic File",
+      "target-size CPU compression",
+      "H264 NVENC compression",
+      "two-file renderer batch"
+    ],
+    "errors": [],
+    "input": {
+      "seconds": 3,
+      "width": 320,
+      "height": 180
+    },
+    "gpu": [
+      "NVIDIA GeForce RTX 4090"
+    ],
+    "batch": [
+      {
+        "progress": 100,
+        "afterSize": 133805,
+        "error": ""
+      },
+      {
+        "progress": 100,
+        "afterSize": 133805,
+        "error": ""
+      }
+    ],
+    "preview": {
+      "width": 722,
+      "height": 406,
+      "duration": 3.018005
+    }
+  },
+  "artifacts": {
+    "pass": true,
+    "installerBytes": 177624800,
+    "installerSHA256": "4bf158d7832ae1c02094b1ee9f090bdacb7a2c141ba82cfe517338ab26b5656e",
+    "installerSHA512": "49kwXYSkVwikx+eExJmIkoVFxrHA10OegcMawTGdbp0luck/Bb20JeJOY0VBbOvh+iSGdFbCH7pprAzRQtAs+g==",
+    "blockmapVersion": "2",
+    "yamlParsedByUpdater": "6.8.12",
+    "packagedJsYaml": "4.3.2",
+    "yamlIdempotent": true,
+    "asarSourceMatches": true,
+    "ffmpegResourcesMatch": true,
+    "packagedLaunched": false
+  },
+  "notExecuted": [
+    "packaged app launch",
+    "installer install/uninstall",
+    "Electron 33 to 45 installed app update",
+    "production or release publishing",
+    "native file chooser and OS drag/drop interaction",
+    "independent review",
+    "Ready or merge"
+  ]
+}
